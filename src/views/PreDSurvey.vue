@@ -34,7 +34,7 @@
                 {{ getAgreementLabel(option.value) }}
               </div>
               <b-form-radio :value="option.value" class="custom-radio-button">
-                {{ option.text }}
+                <!-- Empty text since we're only showing labels -->
               </b-form-radio>
             </div>
           </div>
@@ -69,12 +69,12 @@ export default {
 
       // Agreement scale options
       agreementScale: [
-        {text: '-3', value: -3},
-        {text: '-2', value: -2},
-        {text: '-1', value: -1},
-        {text: '+1', value: 1},
-        {text: '+2', value: 2},
-        {text: '+3', value: 3}
+        {text: '', value: -3},
+        {text: '', value: -2},
+        {text: '', value: -1},
+        {text: '', value: 1},
+        {text: '', value: 2},
+        {text: '', value: 3}
       ],
 
       // Importance scale options

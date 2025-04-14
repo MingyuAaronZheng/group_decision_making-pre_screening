@@ -45,7 +45,7 @@ library.add(faGavel)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Add global properties
-Vue.prototype.$server_url = 'http://go.discussionexperiment.com/ccw/api/'
+Vue.prototype.$server_url = 'https://go.discussionexperiment.com/ccw/api/'
 Vue.prototype.$ws_url = 'ws://go.discussionexperiment.com/ws/chat/'
 Vue.prototype.$chat_url = 'ws://go.discussionexperiment.com/ws/chat/'
 Vue.prototype.$test_mode = false
