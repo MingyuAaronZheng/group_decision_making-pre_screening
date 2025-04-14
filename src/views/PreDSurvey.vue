@@ -6,12 +6,7 @@
     <template v-slot:lead>
       Please indicate your level of agreement with each policy statement below.
     </template>
-    
-    <!-- Progress indicator -->
-    <b-progress :value="progressValue" :max="selectedStatements.length" class="mb-4" variant="info" height="1.5rem">
-      <span class="progress-label">{{ progressValue }} of {{ selectedStatements.length }} completed</span>
-    </b-progress>
-    
+
     <div class="content-area">
       <div v-for="(statement, index) in selectedStatements" :key="index" class="policy-statement">
         <!-- Display the policy statement -->
@@ -19,34 +14,40 @@
           <h3 class="statement-number">Statement {{ index + 1 }}</h3>
           <div class="statement-text">{{ statement }}</div>
         </div>
-
-        <!-- Agreement scale labels -->
-        <div class="scale-labels">
-          <span>Strongly disagree</span>
-          <span class="flex-grow"></span>
-          <span>Strongly agree</span>
-        </div>
-        
         <!-- Question 1: Extent of agreement -->
         <b-form-radio-group
           v-model="responses[index].agreement"
           :name="'agreement_' + index"
-          :options="agreementScale"
           buttons
           button-variant="outline-primary"
           size="md"
           class="agreement-options"
           @change="onFormInteraction"
-        />
+        >
+          <div class="agreement-wrapper">
+            <div
+              v-for="(option, optIndex) in agreementScale"
+              :key="optIndex"
+              class="option-label-wrapper"
+            >
+              <div class="option-label">
+                {{ getAgreementLabel(option.value) }}
+              </div>
+              <b-form-radio :value="option.value" class="custom-radio-button">
+                {{ option.text }}
+              </b-form-radio>
+            </div>
+          </div>
+        </b-form-radio-group>
       </div>
-      
-      <!-- Final submit button -->
-      <div class="button-area">
-        <b-button variant="primary" size="lg" @click="finalSubmit" :disabled="!isFormComplete">
-          <b-icon icon="check-circle" class="mr-2"></b-icon>
-          Submit and complete
-        </b-button>
-      </div>
+    </div>
+
+    <!-- Final submit button -->
+    <div class="button-area">
+      <b-button variant="primary" size="lg" @click="finalSubmit" :disabled="!isFormComplete">
+        <font-awesome-icon :icon="['fas', 'circle-check']" class="mr-2" />
+        Submit and complete
+      </b-button>
     </div>
   </b-jumbotron>
 </template>
@@ -99,16 +100,27 @@ export default {
   },
   computed: {
     // Calculate progress value based on completed responses
-    progressValue() {
+    progressValue () {
       return this.responses.filter(response => response.agreement !== null).length
     },
-    
+
     // Check if all questions are answered
-    isFormComplete() {
+    isFormComplete () {
       return !this.responses.some(response => response.agreement === null)
     }
   },
   methods: {
+    getAgreementLabel (value) {
+      switch (value) {
+        case -3: return 'Strongly Disagree'
+        case -2: return 'Disagree'
+        case -1: return 'Somewhat Disagree'
+        case 1: return 'Somewhat Agree'
+        case 2: return 'Agree'
+        case 3: return 'Strongly Agree'
+        default: return ''
+      }
+    },
     // Move to the next statement (optional functionality)
     moveToNext (index) {
       if (!this.responses[index].agreement) {
@@ -193,6 +205,40 @@ export default {
 </script>
 
 <style scoped>
+
+.agreement-wrapper {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+
+.option-label-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 90px;
+  text-align: center;
+}
+
+.option-label {
+  font-size: 0.8rem;
+  color: #495057;
+  margin-bottom: 4px;
+  height: 2.5em; /* 🔥 this keeps all labels same height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.custom-radio-button >>> .btn {
+  width: 100%;
+  padding: 0.6rem 1rem;
+}
+
 .survey-container {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;

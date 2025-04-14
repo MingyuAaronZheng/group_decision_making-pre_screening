@@ -165,14 +165,17 @@ const store = new Vuex.Store({
           try {
             const currentTime = Date.now()
             const timeSinceLastActivity = currentTime - state.lastActivityTimestamp
+            // console.log('Time since last activity: ' + timeSinceLastActivity) // Debug log
             // Show warning after 30 seconds of inactivity
             if (timeSinceLastActivity >= 30000 && !state.inactivityWarningShown) {
+              // console.log('Showing inactivity warning' + timeSinceLastActivity) // Debug log
               state.inactivityWarningShown = true
               // Emit a custom event that components can listen to
               window.dispatchEvent(new CustomEvent('show-inactivity-warning'))
             }
             // Remove user after 45 seconds of inactivity
             if (timeSinceLastActivity >= 45000) {
+              // console.log('Removing inactive user' + timeSinceLastActivity) // Debug log
               window.dispatchEvent(new CustomEvent('remove-inactive-user'))
             }
           } catch (error) {
