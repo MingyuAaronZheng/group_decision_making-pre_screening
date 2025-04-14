@@ -1,26 +1,52 @@
 <template>
-  <b-jumbotron header-level="5">
+  <b-jumbotron header-level="5" class="survey-container">
+    <template v-slot:header>
+      <h2 class="survey-title">Policy Statement Survey</h2>
+    </template>
     <template v-slot:lead>
       Please indicate your level of agreement with each policy statement below.
     </template>
+    
+    <!-- Progress indicator -->
+    <b-progress :value="progressValue" :max="selectedStatements.length" class="mb-4" variant="info" height="1.5rem">
+      <span class="progress-label">{{ progressValue }} of {{ selectedStatements.length }} completed</span>
+    </b-progress>
+    
     <div class="content-area">
       <div v-for="(statement, index) in selectedStatements" :key="index" class="policy-statement">
         <!-- Display the policy statement -->
-        <p><strong>Statement {{ index + 1 }}:</strong> {{ statement }}</p>
+        <div class="statement-header">
+          <h3 class="statement-number">Statement {{ index + 1 }}</h3>
+          <div class="statement-text">{{ statement }}</div>
+        </div>
 
+        <!-- Agreement scale labels -->
+        <div class="scale-labels">
+          <span>Strongly disagree</span>
+          <span class="flex-grow"></span>
+          <span>Strongly agree</span>
+        </div>
+        
         <!-- Question 1: Extent of agreement -->
         <b-form-radio-group
           v-model="responses[index].agreement"
           :name="'agreement_' + index"
           :options="agreementScale"
-          stacked
+          buttons
+          button-variant="outline-primary"
+          size="md"
+          class="agreement-options"
           @change="onFormInteraction"
         />
       </div>
+      
       <!-- Final submit button -->
       <div class="button-area">
-          <b-button variant="success" @click="finalSubmit">Submit and complete</b-button>
-        </div>
+        <b-button variant="primary" size="lg" @click="finalSubmit" :disabled="!isFormComplete">
+          <b-icon icon="check-circle" class="mr-2"></b-icon>
+          Submit and complete
+        </b-button>
+      </div>
     </div>
   </b-jumbotron>
 </template>
@@ -42,12 +68,12 @@ export default {
 
       // Agreement scale options
       agreementScale: [
-        {text: 'Strongly disagree', value: -3},
-        {text: 'Disagree', value: -2},
-        {text: 'Somewhat disagree', value: -1},
-        {text: 'Somewhat agree', value: 1},
-        {text: 'Agree', value: 2},
-        {text: 'Strongly agree', value: 3}
+        {text: '-3', value: -3},
+        {text: '-2', value: -2},
+        {text: '-1', value: -1},
+        {text: '+1', value: 1},
+        {text: '+2', value: 2},
+        {text: '+3', value: 3}
       ],
 
       // Importance scale options
@@ -71,11 +97,26 @@ export default {
     window.addEventListener('show-inactivity-warning', this.showInactivityWarning)
     window.addEventListener('remove-inactive-user', this.handleInactiveUser)
   },
+  computed: {
+    // Calculate progress value based on completed responses
+    progressValue() {
+      return this.responses.filter(response => response.agreement !== null).length
+    },
+    
+    // Check if all questions are answered
+    isFormComplete() {
+      return !this.responses.some(response => response.agreement === null)
+    }
+  },
   methods: {
     // Move to the next statement (optional functionality)
     moveToNext (index) {
       if (!this.responses[index].agreement) {
-        alert('Please complete the question before proceeding.')
+        this.$bvToast.toast('Please complete the current question before proceeding.', {
+          title: 'Required Field',
+          variant: 'warning',
+          solid: true
+        })
         return
       }
       // Scroll to the next statement or focus
@@ -91,7 +132,11 @@ export default {
         (response) => !response.agreement
       )
       if (incomplete) {
-        alert('Please complete all questions before submitting.')
+        this.$bvToast.toast('Please answer all questions before submitting.', {
+          title: 'Incomplete Survey',
+          variant: 'warning',
+          solid: true
+        })
         return
       }
 
@@ -148,40 +193,127 @@ export default {
 </script>
 
 <style scoped>
-.jumbotron {
+.survey-container {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.survey-title {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 .jumbotron >>> .lead {
   font-size: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  color: #495057;
 }
 
 .content-area {
   font-size: 1.2rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 1rem;
 }
 
 .policy-statement {
-  margin-bottom: 2rem;
-  padding: 1rem;
+  margin-bottom: 3rem;
+  padding: 1.5rem;
   background: #f8f9fa;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
 }
 
-.b-form-radio-group {
-  margin-top: 1rem;
+.policy-statement:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.statement-header {
+  margin-bottom: 1.5rem;
+}
+
+.statement-number {
+  font-size: 1.3rem;
+  color: #007bff;
+  margin-bottom: 0.5rem;
+}
+
+.statement-text {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #343a40;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.agreement-options {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.agreement-options >>> .btn-group {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.agreement-options >>> .btn {
+  flex: 1;
+  margin: 0 4px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.agreement-options >>> .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.agreement-options >>> .active {
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .button-area {
-  margin-top: 2rem;
+  margin-top: 3rem;
   text-align: center;
+}
+
+.button-area .btn {
+  padding: 0.75rem 2rem;
+  font-weight: bold;
+  transition: all 0.3s;
+  border-radius: 30px;
+}
+
+.button-area .btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.progress-label {
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 </style>
