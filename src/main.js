@@ -45,10 +45,10 @@ library.add(faGavel)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Add global properties
-Vue.prototype.$server_url = 'http://127.0.0.1:8000/ccw/api/'
-Vue.prototype.$ws_url = 'ws://127.0.0.1:8000/ws/chat/'
-Vue.prototype.$chat_url = 'ws://127.0.0.1:8000/ws/chat/'
-Vue.prototype.$test_mode = true
+Vue.prototype.$server_url = 'http://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ccw/api/'
+Vue.prototype.$ws_url = 'ws://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ws/chat/'
+Vue.prototype.$chat_url = 'ws://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ws/chat/'
+Vue.prototype.$test_mode = false
 
 const store = new Vuex.Store({
   // plugins: [createPersistedState({
@@ -225,14 +225,10 @@ window.addEventListener('beforeunload', (event) => {
 new Vue({
   data: function () {
     return {
-      // localhost
-      server_url: 'http://127.0.0.1:8000/ccw/api/',
-      chat_url: 'ws://127.0.0.1:8000/ws/chat/',
-      test_mode: true,
       // AWS
-      // server_url: 'https://devil-advocate.hci-study.com/ccw/api/',
-      // chat_url: 'wss://devil-advocate.hci-study.com/ws/chat/',
-      // test_mode: false,
+      server_url: 'https://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ccw/api/',
+      chat_url: 'wss://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ws/chat/',
+      test_mode: false,
       estimation: null,
       is_loading: false,
       fire_400: false,
