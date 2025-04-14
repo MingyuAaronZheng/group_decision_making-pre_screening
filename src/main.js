@@ -45,9 +45,9 @@ library.add(faGavel)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Add global properties
-Vue.prototype.$server_url = 'http://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ccw/api/'
-Vue.prototype.$ws_url = 'ws://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ws/chat/'
-Vue.prototype.$chat_url = 'ws://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ws/chat/'
+Vue.prototype.$server_url = 'http://go.discussionexperiment.com/ccw/api/'
+Vue.prototype.$ws_url = 'ws://go.discussionexperiment.com/ws/chat/'
+Vue.prototype.$chat_url = 'ws://go.discussionexperiment.com/ws/chat/'
 Vue.prototype.$test_mode = false
 
 const store = new Vuex.Store({
@@ -226,8 +226,8 @@ new Vue({
   data: function () {
     return {
       // AWS
-      server_url: 'https://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ccw/api/',
-      chat_url: 'wss://pilottestpodistribution.us-east-2.elasticbeanstalk.com/ws/chat/',
+      server_url: 'https://go.discussionexperiment.com/ccw/api/',
+      chat_url: 'wss://go.discussionexperiment.com/ws/chat/',
       test_mode: false,
       estimation: null,
       is_loading: false,
