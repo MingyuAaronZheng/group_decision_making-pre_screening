@@ -3,7 +3,7 @@
     <b-navbar-brand>Parole Judgement Test</b-navbar-brand>
     <b-nav class="ml-auto">
       <b-navbar-brand :class="avatarShowed" class="avatar-area">
-        <v-animal size="40px" :name="avatarNamechanged" :color="avatarColorHexchanged" class="avatar-icon"/>
+        <v-animal size="40px" :name="avatarNamechanged" :color="avatarColorchanged" class="avatar-icon"/>
         {{avatarColorchanged}} {{avatarNamechanged}}
       </b-navbar-brand>
     </b-nav>
@@ -25,7 +25,7 @@ export default {
       return this.$store.state.avatar_color
     },
     avatarColorHexchanged () {
-      return colors[this.$store.state.avatar_color]
+      return colors[this.$store.state.avatar_color] || this.$store.state.avatar_color || '#000000'
     },
     avatarShowed () {
       return (this.avatarNamechanged != null) ? 'show_avatar' : 'hide_avatar'
@@ -35,10 +35,29 @@ export default {
 </script>
 <style>
   .show_avatar {
-    visibility: visible;
+    display: block;
+  }
+  .hide_avatar {
+    display: none;
+  }
+  .avatar-area {
+    display: flex;
+    align-items: center;
+  }
+  .avatar-icon {
+    display: inline-block !important;
+    margin-right: 10px;
   }
 
-  .hide_avatar {
-    visibility: hidden;
+  .avatar-icon svg {
+    fill: inherit !important;
+  }
+
+  .avatar-icon svg path {
+    fill: inherit !important;
+  }
+
+  .avatar-icon svg circle {
+    fill: inherit !important;
   }
 </style>

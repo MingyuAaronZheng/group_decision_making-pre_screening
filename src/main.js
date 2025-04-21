@@ -19,7 +19,7 @@ import 'vue-toastification/dist/index.css'
 /* import the fontawesome core */
 import { library } from '@fortawesome/fontawesome-svg-core'
 /* import specific icons */
-import { faCircleCheck, faCircleXmark, faCircle, faSkull, faGavel } from '@fortawesome/free-solid-svg-icons'
+import { faCircleCheck, faCircleXmark, faCircle, faSkull, faGavel, faRobot } from '@fortawesome/free-solid-svg-icons'
 /* import font awesome icon component */
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import VueTour from 'vue-tour'
@@ -42,13 +42,14 @@ library.add(faCircleXmark)
 library.add(faCircle)
 library.add(faSkull)
 library.add(faGavel)
+library.add(faRobot)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Add global properties
-Vue.prototype.$server_url = 'https://go.discussionexperiment.com/ccw/api/'
-Vue.prototype.$ws_url = 'ws://go.discussionexperiment.com/ws/chat/'
-Vue.prototype.$chat_url = 'ws://go.discussionexperiment.com/ws/chat/'
-Vue.prototype.$test_mode = false
+Vue.prototype.$server_url = 'http://127.0.0.1:8000/ccw/api/'
+Vue.prototype.$ws_url = 'ws://127.0.0.1:8000/ws/chat/'
+Vue.prototype.$chat_url = 'ws://127.0.0.1:8000/ws/chat/'
+Vue.prototype.$test_mode = true
 
 const store = new Vuex.Store({
   // plugins: [createPersistedState({
@@ -67,19 +68,17 @@ const store = new Vuex.Store({
       participant_number_condition: -1,
       participant_condition: -1,
       moderator_condition: -1,
+      // masterStatements: [
+      //   'Should abortion be legal?',
+      //   'Should governments have the authority to censor online content?',
+      //   'Should the government employ a stricter immigration/border policy?',
+      //   'Do tariffs on imported goods protect American jobs and industries from foreign competition?',
+      //   'Should the government cut tax for the wealthy?',
+      //   'Is unpredictability in U.S. foreign policy an effective deterrent against hostile actions from other nations?'
+      // ], // Store master statements
       masterStatements: [
-        'Abortion should be legal.',
-        'Governments should have the authority to censor online content.',
-        'The government should employ a stricter immigration/border policy.',
-        'Tariffs on imported goods protect American jobs and industries from foreign competition.',
-        'The government should cut taxes for the wealthy.',
-        'Unpredictability in U.S. foreign policy is an effective deterrent against hostile actions from other nations.',
-        'The United States should implement a digital dollar system.',
-        'We should use gene editing to make better babies.',
-        'The United States should expand the development of nuclear power.',
-        'Unions benefit the economy',
-        'Automation will crash democracy'
-      ], // Store master statements
+        'Should abortion be legal?'
+      ], // use only one statement for TEST
       heartbeatInterval: null,
       chat_statement_index: null,
       chat_statement: null,
@@ -88,7 +87,11 @@ const store = new Vuex.Store({
       inactivityWarningShown: false,
       inactivityCheckInterval: null,
       random_third_person_prompt: -1,
-      is_third_person: false
+      is_third_person: false,
+      websocket: null,
+      websocketConnected: false,
+      WebSocketOnMessageRunningTimes: 0,
+      current_turn: 0
     }
   },
   mutations: {
@@ -104,11 +107,10 @@ const store = new Vuex.Store({
     // In main.js store configuration
     startHeartbeat (state) {
       if (!state.heartbeatInterval) {
-        if (!state.subject_id) return
         state.heartbeatInterval = setInterval(() => {
           axios.post(Vue.prototype.$server_url + 'heartbeat', {
             subject_id: state.subject_id
-          }).catch(() => {})
+          })
         }, 10000)
       }
     },
@@ -127,26 +129,29 @@ const store = new Vuex.Store({
     setPreDiscussionResponses (state, responses) {
       state.preDiscussionResponses = responses
     },
+    setPostDiscussionResponses (state, responses) {
+      state.postDiscussionResponses = responses
+    },
     assign_subject_id (state, record) {
       state.subject_id = record.subject_id
-    },
-    assign_condition (state, record) {
-      state.condition = record.condition
     },
     assign_group_id (state, record) {
       state.group_id = record.group_id
     },
     new_message (state, message) {
       state.messages.push(message)
+      console.log(`New message: ${message.content}`)
     },
     clear_messages (state) {
       state.messages = []
     },
     assign_group_chat_statement_indx (state, index) {
       state.chat_statement_index = index
+      console.log('Updated chat statement index:', state.chat_statement_index)
     },
     assign_group_chat_statement (state, chat_statement_index) {
       state.chat_statement = state.masterStatements[chat_statement_index]
+      console.log('Updated chat statement:', state.chat_statement)
     },
     update_avatar (state, payload) {
       state.avatar_name = payload.avatar_name
@@ -161,27 +166,29 @@ const store = new Vuex.Store({
     },
     startInactivityCheck (state) {
       if (!state.inactivityCheckInterval) {
+        // Reset the activity timestamp when starting the check
+        state.lastActivityTimestamp = Date.now()
+        state.inactivityWarningShown = false
+
         state.inactivityCheckInterval = setInterval(() => {
-          try {
-            const currentTime = Date.now()
-            const timeSinceLastActivity = currentTime - state.lastActivityTimestamp
-            // console.log('Time since last activity: ' + timeSinceLastActivity) // Debug log
-            // Show warning after 30 seconds of inactivity
-            if (timeSinceLastActivity >= 30000 && !state.inactivityWarningShown) {
-              // console.log('Showing inactivity warning' + timeSinceLastActivity) // Debug log
-              state.inactivityWarningShown = true
-              // Emit a custom event that components can listen to
-              window.dispatchEvent(new CustomEvent('show-inactivity-warning'))
-            }
-            // Remove user after 45 seconds of inactivity
-            if (timeSinceLastActivity >= 45000) {
-              // console.log('Removing inactive user' + timeSinceLastActivity) // Debug log
-              window.dispatchEvent(new CustomEvent('remove-inactive-user'))
-            }
-          } catch (error) {
-            console.error('Inactivity check error:', error)
+          const currentTime = Date.now()
+          const timeSinceLastActivity = currentTime - state.lastActivityTimestamp
+
+          // Show warning after 45 seconds of inactivity
+          if (timeSinceLastActivity >= 45000 && !state.inactivityWarningShown) {
+            state.inactivityWarningShown = true
+            // Emit a custom event that components can listen to
+            window.dispatchEvent(new CustomEvent('show-inactivity-warning'))
           }
-        }, 1000)
+
+          // Remove user after 1 minute of inactivity
+          if (timeSinceLastActivity >= 60000) {
+            // Clear the interval before removing user to prevent multiple triggers
+            clearInterval(state.inactivityCheckInterval)
+            state.inactivityCheckInterval = null
+            window.dispatchEvent(new CustomEvent('remove-inactive-user'))
+          }
+        }, 1000) // Check every second
       }
     },
     stopInactivityCheck (state) {
@@ -192,6 +199,12 @@ const store = new Vuex.Store({
     },
     setThirdPerson (state, is_third_person) {
       state.is_third_person = is_third_person
+    },
+    setWebSocket (state, websocket) {
+      state.websocket = websocket
+    },
+    setWebSocketConnected (state, status) {
+      state.websocketConnected = status
     }
   },
   actions: {
@@ -206,8 +219,33 @@ const store = new Vuex.Store({
     terminateHeartbeat ({ commit }) {
       commit('stopHeartbeat')
     },
-    recordActivity ({ commit }) {
+    recordActivity ({ commit, state }) {
       commit('updateLastActivity')
+      // Also send a heartbeat to the server
+      axios.post(Vue.prototype.$server_url + 'heartbeat', {
+        subject_id: state.subject_id
+      }).catch(error => console.error('Error sending heartbeat:', error))
+    },
+    initWebSocket ({ commit, state }) {
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(state.$ws_url)
+
+        ws.onopen = () => {
+          commit('setWebSocket', ws)
+          commit('setWebSocketConnected', true)
+          resolve()
+        }
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error)
+          reject(error)
+        }
+
+        ws.onclose = () => {
+          commit('setWebSocket', null)
+          commit('setWebSocketConnected', false)
+        }
+      })
     }
   },
   getters: {
@@ -225,10 +263,14 @@ window.addEventListener('beforeunload', (event) => {
 new Vue({
   data: function () {
     return {
+      // localhost
+      server_url: 'http://127.0.0.1:8000/ccw/api/',
+      chat_url: 'ws://127.0.0.1:8000/ws/chat/',
+      test_mode: true,
       // AWS
-      server_url: 'https://go.discussionexperiment.com/ccw/api/',
-      chat_url: 'wss://go.discussionexperiment.com/ws/chat/',
-      test_mode: false,
+      // server_url: 'https://devil-advocate.hci-study.com/ccw/api/',
+      // chat_url: 'wss://devil-advocate.hci-study.com/ws/chat/',
+      // test_mode: false,
       estimation: null,
       is_loading: false,
       fire_400: false,
@@ -245,21 +287,153 @@ new Vue({
     }
   },
   methods: {
-    setup () {
-      const alarm_sound = useSound(sound)
+    initWebSocket () {
+      const wsUrl = `${this.$chat_url}${this.$store.state.group_id}/`
+      console.log('Connecting to WebSocket at:', wsUrl)
 
-      return {
-        alarm_sound
+      this.websock = new WebSocket(wsUrl)
+      this.websock.onmessage = this.webSocketOnMessage
+      this.websock.onopen = this.webSocketOnOpen
+      this.websock.onerror = this.webSocketOnError
+      this.websock.onclose = this.webSocketOnClose
+    },
+    sendWebSocketMessage (msg) {
+      this.websock.send(JSON.stringify(msg))
+    },
+    webSocketOnMessage (response) {
+      let message = JSON.parse(response.data).message
+      if (message.code === 101) {
+        if (message.startable) {
+          this.alarm_sound.play()
+          // show popup message based on the condition
+          let popup_message = 'You will redirect to avatar assignment in 5 seconds'
+
+          this.$toast(popup_message, {
+            position: 'top-right',
+            timeout: 4500,
+            closeOnClick: false,
+            pauseOnFocusLoss: false,
+            pauseOnHover: false,
+            draggable: false,
+            draggablePercent: 0.6,
+            showCloseButtonOnHover: false,
+            hideProgressBar: true,
+            closeButton: false,
+            icon: true,
+            rtl: false
+          })
+          setTimeout(() => {
+            this.setNotReadyToPair()
+            this.$router.push('/avatar-assignment')
+          }, 5000)
+        }
+      } else if (message.code === 201) { // Both human and AI messages
+        let received_msg = message.message
+        // Process human messages
+        // 1. Add avatar info
+        // 2. Update current turn
+        if (received_msg.sender.subject_id > 0) {
+          // Find the member with matching subject_id
+          const member = this.$root.members.find(m => m.subject_id === parseInt(received_msg.sender.subject_id))
+          if (member) {
+            received_msg.sender.avatar_name = member.avatar_name
+            received_msg.sender.avatar_color = member.avatar_color
+            console.log(`Received message from ${received_msg.sender.subject_id}: ${member.avatar_name} (${member.avatar_color})`)
+          } else {
+            console.error('Member not found for subject_id:', received_msg.sender.subject_id, 'Available members:', this.$root.members)
+          }
+        }
+        // Add to Vuex store
+        this.$store.commit('new_message', received_msg)
+        const formData = new FormData()
+        formData.append('group_id', this.$store.state.group_id)
+        axios.post(this.$root.server_url + 'get_group_current_turn', formData)
+          .then(response => {
+            if (response.data.success) {
+              this.$store.state.current_turn = response.data.current_turn
+            }
+          })
+          .catch(error => {
+            console.error('Error getting current turn:', error)
+          })
+        console.log('Current turn:', this.$store.state.current_turn)
+      } else if (message.code === 778) { // Devil's advocate message
+        let received_msg = message.message
+        this.$store.commit('new_message', received_msg)
+      } else if (message.code === 203) { // Typing notification
+        const typingInfo = message.typing_info
+        // Skip if it's the current user's typing notification
+        if (typingInfo.subject_id === this.$store.state.subject_id) {
+          return
+        }
+        if (typingInfo.is_typing) {
+          // Dispatch custom event for typing notification
+          const typingEvent = new CustomEvent('user-typing', {
+            detail: {
+              subject_id: typingInfo.subject_id,
+              avatar_name: typingInfo.avatar_name,
+              avatar_color: typingInfo.avatar_color
+            }
+          })
+          window.dispatchEvent(typingEvent)
+        } else {
+          // Dispatch event to stop typing notification
+          const stoppedTypingEvent = new CustomEvent('user-stopped-typing', {
+            detail: { subject_id: typingInfo.subject_id }
+          })
+          window.dispatchEvent(stoppedTypingEvent)
+        }
+      } else if (message.code === 903) { // Ready to end status update
+        // Update ready status for members
+        const readyMembers = message.ready_members
+        this.$root.members.forEach(member => {
+          member.is_ready_to_end = readyMembers.includes(member.subject_id)
+        })
+        // Store `all_ready` in Vuex so all components can reactively watch it
+        this.$store.commit('setAllReadyStatus', message.all_ready)
       }
     },
-    handleInactiveUser () {
-      axios.post(Vue.prototype.$server_url + 'terminate_participation', { subject_id: this.$store.state.subject_id })
+    webSocketOnOpen (e) {
+      let enter_room = {
+        'code': 100,
+        'data': {
+          'subject_id': this.$store.state.subject_id
+        }
+      }
+      this.$root.sendWebSocketMessage(enter_room)
+    },
+    webSocketOnError (e) {
+      console.error(e)
+    },
+    webSocketOnClose (e) {
+      let leave_room = {
+        'code': 130,
+        'message': this.$store.state.subject_id
+      }
+      this.$root.sendWebSocketMessage(leave_room)
+    },
+    setNotReadyToPair () {
+      const subjectId = this.$store.state.subject_id
+      if (!subjectId || subjectId === -1) {
+        console.error('No subject ID found for setting not ready_to_pair')
+        return
+      }
+      let body = new FormData()
+      body.append('subject_id', subjectId)
+      axios.post(this.$root.server_url + 'set_not_ready_to_pair', body)
         .then(response => {
-          this.$router.push('/timeout')
+          console.log('Set not ready to pair response:', response.data)
         })
         .catch(error => {
-          console.error(error)
+          console.error('Error setting not ready to pair:', error)
         })
+    }
+  },
+  setup () {
+    const alarm_sound = useSound(sound)
+
+    return {
+      alarm_sound
     }
   },
   store: store,

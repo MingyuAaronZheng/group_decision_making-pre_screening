@@ -1,24 +1,30 @@
 <template>
   <b-jumbotron header-level="5">
     <template v-slot:header>
-      <h3 style="text-align: center; margin-bottom: 0;">
-        Welcome to Participate in Our Study! 👋
-      </h3>
+      Welcome to our group discussion study!
     </template>
     <div class="content-area">
       <p>
-        In this short study, we will ask you to share your opinions on a few different policy topics.
+        Welcome to our group discussion study and get ready for an exciting communication adventure!
       </p>
       <p>
-        The study should only take about 1 to 3 minutes to complete. Your responses will be kept completely confidential and used only for research purposes.
-        Please note that you can only participate in this study once.
+        In this study, you will be asked to complete a series of tasks, including:
+      </p>
+      <ul>
+        <li>Sharing your attitudes and perspectives on specific topics,</li>
+        <li>Participating in a discussion task using a customized chat interface, and</li>
+        <li>Reflecting on your experience and providing feedback in a post-discussion survey.</li>
+      </ul>
+      <p>
+        The entire process is expected to take approximately 20–25 minutes. Your responses will remain confidential and will be used exclusively for research purposes to ensure the integrity and impact of the findings.
+        You may take part in this study only once.
       </p>
       <p>
-        Ready to get started? Click the button below!
+        Sounds interesting? Click the button below to start the study!
       </p>
     </div>
     <div class="button-area">
-      <b-button variant="primary" name="next" v-on:click="next">Begin the Study</b-button>
+      <b-button variant="primary" name="next" v-on:click="next">Start the Study</b-button>
     </div>
   </b-jumbotron>
 </template>
@@ -76,49 +82,17 @@ export default {
 </script>
 
 <style scoped>
-.jumbotron {
-  font-family: 'Arial', sans-serif;
-  line-height: 1.7; /* Slightly increased line height for better readability */
+.warning-box {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
+</style>
 
-.jumbotron >>> .lead {
-  font-size: 1.3rem; /* Slightly reduced font size for lead text to be less dominant */
-  margin-bottom: 1.8rem; /* Adjusted margin for better spacing */
-  color: #495057; /* Darken lead text color for better contrast and readability */
-}
-
-.jumbotron >>> .display-4 {
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2.5rem; /* Adjusted header size */
-  color: #007bff; /* Primary color to highlight the welcome message */
-}
-
-.content-area {
-  font-size: 1.1rem; /* Slightly reduced font size in content area for better visual hierarchy */
-  max-width: 750px; /* Slightly reduced max-width for content to breathe better */
-  margin: 0 auto;
-  padding: 1.2rem; /* Slightly increased padding in content area */
-}
-
-.content-area p {
-  margin-bottom: 1.2rem; /* Adjusted paragraph margin */
-  padding: 1rem 1.5rem; /* Adjusted padding within paragraphs */
-  background: #f8f9fa;
-  border-radius: 6px; /* Slightly more rounded corners for paragraph backgrounds */
-  border: 1px solid #e0e0e0; /* Added a subtle border to paragraphs for definition */
-}
-
+<style scoped>
 .button-area {
-  margin-top: 2.5rem; /* Increased margin above button area */
   text-align: center;
-}
-
-.button-area .btn {
-  padding: 0.8rem 2.2rem; /* Adjusted button padding */
-  font-size: 1.1rem;
-  border-radius: 5px; /* Rounded button corners */
 }
 </style>

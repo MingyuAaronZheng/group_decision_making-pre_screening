@@ -85,7 +85,19 @@ li {
 }
 
 .avatar-icon {
-  display:inline-block !important; 
+  display: inline-block !important;
+}
+
+.avatar-icon svg {
+  fill: inherit !important;
+}
+
+.avatar-icon svg path {
+  fill: inherit !important;
+}
+
+.avatar-icon svg circle {
+  fill: inherit !important;
 }
 
 .warning-box {

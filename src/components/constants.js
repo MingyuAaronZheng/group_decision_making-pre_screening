@@ -72,6 +72,7 @@ export const animals = [
 ]
 
 export const colors = {
+  red: '#FF0000',
   blue: '#006CFE',
   yellow: '#FFCC41',
   purple: '#B476FB',

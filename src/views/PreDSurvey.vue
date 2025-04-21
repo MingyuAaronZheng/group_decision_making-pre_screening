@@ -8,18 +8,16 @@
     </template>
 
     <div class="content-area">
-      <div v-for="(statement, index) in selectedStatements" :key="index" class="policy-statement">
-        <!-- Display the policy statement -->
+      <div v-for="(statement, index) in pagedStatements" :key="statement.id" class="policy-statement">
         <div class="statement-header">
-          <h3 class="statement-number">Statement {{ index + 1 }}</h3>
-          <div class="statement-text">{{ statement }}</div>
+          <div class="statement-text highlight-statement">{{ statement.text }}</div>
         </div>
         <!-- Question 1: Extent of agreement -->
         <b-form-radio-group
-          v-model="responses[index].agreement"
-          :name="'agreement_' + index"
+          v-model="responses[(currentPage - 1) * pageSize + index].agreement"
+          :name="'agreement_' + ((currentPage - 1) * pageSize + index)"
           buttons
-          button-variant="outline-primary"
+          button-variant="outline-black"
           size="md"
           class="agreement-options"
           @change="onFormInteraction"
@@ -44,7 +42,10 @@
 
     <!-- Final submit button -->
     <div class="button-area">
-      <b-button variant="primary" size="lg" @click="finalSubmit" :disabled="!isFormComplete">
+      <b-button v-if="currentPage === 1" variant="primary" size="lg" @click="goToNextPage" :disabled="!isCurrentPageComplete">
+        Next Page
+      </b-button>
+      <b-button v-else variant="primary" size="lg" @click="finalSubmit" :disabled="!isCurrentPageComplete">
         <font-awesome-icon :icon="['fas', 'circle-check']" class="mr-2" />
         Submit and complete
       </b-button>
@@ -61,8 +62,11 @@ export default {
       agreement: null
     }))
     return {
-      // selected statements = master statements NOW
-      selectedStatements: this.$store.state.masterStatements,
+      // selected statements = master statements mapped to objects with id and text
+      selectedStatements: this.$store.state.masterStatements.map((text, idx) => ({
+        id: idx,
+        text
+      })),
 
       // Response data for each statement
       responses: initialResponses,
@@ -86,7 +90,12 @@ export default {
         {text: 'Important to me', value: 5},
         {text: 'Very important to me', value: 6},
         {text: 'Extremely important to me', value: 7}
-      ]
+      ],
+      // Will hold randomized statements
+      randomizedStatements: [],
+      // Paging controls
+      pageSize: 6,
+      currentPage: 1
     }
   },
   mounted () {
@@ -99,17 +108,38 @@ export default {
     window.addEventListener('remove-inactive-user', this.handleInactiveUser)
   },
   computed: {
-    // Calculate progress value based on completed responses
-    progressValue () {
-      return this.responses.filter(response => response.agreement !== null).length
+    pagedStatements () {
+      const start = (this.currentPage - 1) * this.pageSize
+      return (this.randomizedStatements || []).slice(start, start + this.pageSize)
     },
-
-    // Check if all questions are answered
-    isFormComplete () {
-      return !this.responses.some(response => response.agreement === null)
+    isCurrentPageComplete () {
+      const start = (this.currentPage - 1) * this.pageSize
+      const end = start + this.pageSize
+      return this.responses.slice(start, end).every(r => r.agreement !== null)
+    }
+  },
+  watch: {
+    selectedStatements: {
+      handler (newVal) {
+        if (newVal && newVal.length > 0) {
+          this.randomizedStatements = this.shuffleArray(newVal)
+          this.responses = newVal.map(() => ({ agreement: null }))
+        }
+      },
+      immediate: true,
+      deep: true
     }
   },
   methods: {
+    // Fisher-Yates shuffle
+    shuffleArray (array) {
+      const arr = array.slice()
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]]
+      }
+      return arr
+    },
     getAgreementLabel (value) {
       switch (value) {
         case -3: return 'Strongly Disagree'
@@ -121,27 +151,13 @@ export default {
         default: return ''
       }
     },
-    // Move to the next statement (optional functionality)
-    moveToNext (index) {
-      if (!this.responses[index].agreement) {
-        this.$bvToast.toast('Please complete the current question before proceeding.', {
-          title: 'Required Field',
-          variant: 'warning',
-          solid: true
-        })
-        return
-      }
-      // Scroll to the next statement or focus
-      const nextElement = document.querySelector(`[name='agreement_${index + 1}']`)
-      if (nextElement) {
-        nextElement.scrollIntoView({behavior: 'smooth'})
-      }
-    },
 
     // Final submit logic
     finalSubmit () {
+      // Only allow submit on page 2
+      if (this.currentPage !== 2) return
       const incomplete = this.responses.some(
-        (response) => !response.agreement
+        (response) => response.agreement === null
       )
       if (incomplete) {
         this.$bvToast.toast('Please answer all questions before submitting.', {
@@ -151,18 +167,23 @@ export default {
         })
         return
       }
-
+      // Prepare mapped responses: [{id, agreement}]
+      const mappedResponses = this.randomizedStatements.map((s, i) => ({
+        statement_id: s.id,
+        agreement: this.responses[i].agreement
+      }))
       const body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
-      body.append('responses', JSON.stringify(this.responses))
+      body.append('responses', JSON.stringify(mappedResponses))
+      console.log('PreDSurvey responses:', mappedResponses)
       // Store the responses in frontend for later comparison with post-discussion survey
-      this.$store.commit('setPreDiscussionResponses', this.responses)
+      this.$store.commit('setPreDiscussionResponses', mappedResponses)
       // Submit the data to the server
       axios
         .post(this.$root.server_url + 'Update_pre_discussion_survey', body)
         .then((response) => {
           if (response.data.success) {
-            this.$router.push('/PreDSurveySuccess')
+            this.$router.push('/WaitingRoom')
           } else {
             alert(response.data.message)
           }
@@ -171,17 +192,24 @@ export default {
           alert('An error occurred while submitting. Please try again.')
         })
     },
+    goToNextPage () {
+      if (this.currentPage === 1 && this.isCurrentPageComplete) {
+        this.currentPage = 2
+        // Optionally scroll to top
+        window.scrollTo({top: 0, behavior: 'smooth'})
+      }
+    },
 
     // Track activity on form interactions
     onFormInteraction () {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 15 seconds or you may be removed.', {
+      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
         title: 'Inactivity Warning',
         variant: 'warning',
         solid: true,
-        autoHideDelay: 10000
+        autoHideDelay: 30000
       })
     },
     handleInactiveUser () {
@@ -237,6 +265,77 @@ export default {
 .custom-radio-button >>> .btn {
   width: 100%;
   padding: 0.6rem 1rem;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Custom black radio button style: use with button-variant="outline-black" (see usage hint below) */
+.btn-outline-black {
+  color: #000 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: #000 !important;
+}
+.btn-outline-black:hover,
+.btn-outline-black:focus,
+.btn-outline-black.active,
+.btn-outline-black:active,
+.btn-outline-black:checked {
+  color: #fff !important;
+  background-color: #000 !important;
+  border-color: #000 !important;
+}
+/* BootstrapVue deep selectors for custom-radio-button using outline-black */
+::v-deep .custom-radio-button .btn-outline-black,
+::v-deep .custom-radio-button .btn-outline-black.active,
+::v-deep .custom-radio-button .btn-outline-black:active,
+::v-deep .custom-radio-button .btn-outline-black:focus,
+::v-deep .custom-radio-button .btn-outline-black:checked {
+  color: #fff !important;
+  background: #000 !important;
+  border-color: #000 !important;
+  box-shadow: none !important;
+}
+/* Usage: <b-form-radio-group ... button-variant="outline-black" ...> */
+
+/* Remove border and background for active/checked state as well */
+/* Strongest override for BootstrapVue radio button background */
+::v-deep .custom-radio-button .btn,
+::v-deep .custom-radio-button .btn.active,
+::v-deep .custom-radio-button .btn:active,
+::v-deep .custom-radio-button .btn:focus,
+::v-deep .custom-radio-button .btn:checked,
+::v-deep .custom-radio-button .btn-primary,
+::v-deep .custom-radio-button .btn-outline-primary,
+::v-deep .custom-radio-button .btn-primary.active,
+::v-deep .custom-radio-button .btn-primary:active,
+::v-deep .custom-radio-button .btn-primary:focus,
+::v-deep .custom-radio-button .btn-primary:checked,
+::v-deep .custom-radio-button .btn-outline-primary.active,
+::v-deep .custom-radio-button .btn-outline-primary:active,
+::v-deep .custom-radio-button .btn-outline-primary:focus,
+::v-deep .custom-radio-button .btn-outline-primary:checked {
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* If Bootstrap 5+ and CSS variables are used */
+::v-deep .custom-radio-button .btn,
+::v-deep .custom-radio-button .btn-primary,
+::v-deep .custom-radio-button .btn-outline-primary {
+  --bs-btn-bg: #000 !important;
+  --bs-btn-border-color: #000 !important;
+  --bs-btn-hover-bg: #222 !important;
+  --bs-btn-active-bg: #000 !important;
+  --bs-btn-active-border-color: #000 !important;
+}
+
+/* Remove border radius if you want fully flat look */
+.custom-radio-button >>> .btn {
+  border-radius: 0 !important;
 }
 
 .survey-container {
@@ -287,10 +386,25 @@ export default {
 
 .statement-number {
   font-size: 1.3rem;
-  color: #007bff;
+  color: #000 !important; /* Black for 'Statement 1' */
   margin-bottom: 0.5rem;
 }
 
+.statement-text.highlight-statement {
+  font-size: 1.5rem;
+  line-height: 1.7;
+  color: #000 !important; /* Black for the statement text */
+  font-weight: bold;
+  background: #fffbe6;
+  border-radius: 8px;
+  padding: 1.1rem 1.5rem;
+  margin: 0.8rem 0 1.5rem 0;
+  box-shadow: 0 2px 8px rgba(255, 217, 0, 0.08);
+  border: 1.5px solid #ffe066;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* If you want to keep the original class for other uses: */
 .statement-text {
   font-size: 1.2rem;
   line-height: 1.6;
@@ -325,7 +439,8 @@ export default {
 .agreement-options >>> .btn {
   flex: 1;
   margin: 0 4px;
-  border-radius: 4px;
+  border-radius: 10px;
+  border-width: 0;
   font-weight: 500;
   transition: all 0.2s;
 }
@@ -362,4 +477,5 @@ export default {
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
+
 </style>
