@@ -9250,6 +9250,11 @@ stopword@^3.1.4:
   resolved "https://registry.npmjs.org/stopword/-/stopword-3.1.4.tgz"
   integrity sha512-RiyU12FwHWX1i42gxhn5sywgpV5mptZTzbHKqKh5wVDWC2Uu+8vKbLv8xxeNa0p29vECbYGLXpDayo54n9+dsg==
 
+stopwords@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.npmjs.org/stopwords/-/stopwords-0.0.9.tgz"
+  integrity sha512-2OF7/9f5buXrBB8De5ZAC9+g5nIw9SRx9ZsL3Qpz6znSfPEihOmaMnwJxXehynZ9AfRNroHIKEIcsEmRywVXVQ==
+
 stream-browserify@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/stream-browserify/-/stream-browserify-3.0.0.tgz"
