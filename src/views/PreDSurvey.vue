@@ -183,7 +183,7 @@ export default {
         .post(this.$root.server_url + 'Update_pre_discussion_survey', body)
         .then((response) => {
           if (response.data.success) {
-            this.$router.push('/WaitingRoom')
+            this.$router.push('/DiscussionInstructions')
           } else {
             alert(response.data.message)
           }
@@ -217,7 +217,7 @@ export default {
       body.append('subject_id', this.$store.state.subject_id)
       axios.post(this.$root.server_url + 'terminate_participation', body)
         .then(response => {
-          this.$router.push('/timeout')
+          this.$router.push('/TerminatedParticipation')
         })
         .catch(error => {
           console.error(error)
@@ -283,8 +283,8 @@ export default {
 .btn-outline-black:active,
 .btn-outline-black:checked {
   color: #fff !important;
-  background-color: #000 !important;
-  border-color: #000 !important;
+  background-color: #888 !important;
+  border-color: #888 !important;
 }
 /* BootstrapVue deep selectors for custom-radio-button using outline-black */
 ::v-deep .custom-radio-button .btn-outline-black,
@@ -293,8 +293,8 @@ export default {
 ::v-deep .custom-radio-button .btn-outline-black:focus,
 ::v-deep .custom-radio-button .btn-outline-black:checked {
   color: #fff !important;
-  background: #000 !important;
-  border-color: #000 !important;
+  background: #888 !important;
+  border-color: #888 !important;
   box-shadow: none !important;
 }
 /* Usage: <b-form-radio-group ... button-variant="outline-black" ...> */
@@ -316,21 +316,21 @@ export default {
 ::v-deep .custom-radio-button .btn-outline-primary:active,
 ::v-deep .custom-radio-button .btn-outline-primary:focus,
 ::v-deep .custom-radio-button .btn-outline-primary:checked {
-  background: #000 !important;
-  border-color: #000 !important;
+  background: #ccc !important;
+  border-color: #ccc !important;
   color: #fff !important;
   box-shadow: none !important;
 }
 
-/* If Bootstrap 5+ and CSS variables are used */
+/* Update CSS variable block for grey */
 ::v-deep .custom-radio-button .btn,
 ::v-deep .custom-radio-button .btn-primary,
 ::v-deep .custom-radio-button .btn-outline-primary {
-  --bs-btn-bg: #000 !important;
-  --bs-btn-border-color: #000 !important;
-  --bs-btn-hover-bg: #222 !important;
-  --bs-btn-active-bg: #000 !important;
-  --bs-btn-active-border-color: #000 !important;
+  --bs-btn-bg: #ccc !important;
+  --bs-btn-border-color: #ccc !important;
+  --bs-btn-hover-bg: #b3b3b3 !important;
+  --bs-btn-active-bg: #ccc !important;
+  --bs-btn-active-border-color: #ccc !important;
 }
 
 /* Remove border radius if you want fully flat look */

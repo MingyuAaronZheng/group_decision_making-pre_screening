@@ -1,10 +1,13 @@
 <template>
-  <b-jumbotron header-level="5">
-    <template v-slot:lead>
-      Post-Discussion Questionnaire
-      Thank you for participating in the discussion task. In this section, you will complete an Exit Survey, designed to gather your feedback and reflections on the discussion experience.
-    </template>
-    <div class="content-area">
+  <div class="centered-survey-wrapper">
+    <div class="intro-center-frame">
+      <div class="highlighted-lead">
+        <div class="intro-title">Post-Discussion Questionnaire</div>
+        Thank you for participating in the discussion task. In this section, you will complete an Exit Survey, designed to gather your feedback and reflections on the discussion experience.
+      </div>
+    </div>
+    <b-jumbotron header-level="5" class="questions-area">
+      <div class="content-area">
       <!-- Policy Attitudes Section -->
       <div class="section">
         <h4>Policy Attitudes and Personal Importance</h4>
@@ -17,11 +20,20 @@
             <p>To what extent do you agree with this statement?</p>
             <b-form-radio-group
               v-model="policyResponses[index].agreement"
-              :options="agreementScale"
-              stacked
-              required
+              :name="'agreement_' + index"
+              buttons
+              button-variant="outline-black"
+              size="md"
+              class="agreement-options custom-radio-button"
               @change="onFormInteraction"
-            />
+            >
+              <div class="agreement-wrapper">
+                <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                  <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                </div>
+              </div>
+            </b-form-radio-group>
           </div>
 
           <!-- Importance Question -->
@@ -29,11 +41,20 @@
             <p>How personally important is this issue to you?</p>
             <b-form-radio-group
               v-model="policyResponses[index].importance"
-              :options="importanceScale"
-              stacked
-              required
+              :name="'importance_' + index"
+              buttons
+              button-variant="outline-black"
+              size="md"
+              class="agreement-options custom-radio-button"
               @change="onFormInteraction"
-            />
+            >
+              <div class="agreement-wrapper">
+                <div v-for="(option, optIndex) in importanceScale" :key="optIndex" class="option-label-wrapper">
+                  <div class="option-label">{{ option.text }}</div>
+                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                </div>
+              </div>
+            </b-form-radio-group>
           </div>
         </div>
       </div>
@@ -44,22 +65,40 @@
         <p>How would you grade the quality of the discussion you just had?</p>
         <b-form-radio-group
           v-model="conversationQuality"
-          :options="qualityScale"
-          stacked
-          required
+          :name="'conversationQuality'"
+          buttons
+          button-variant="outline-black"
+          size="md"
+          class="agreement-options custom-radio-button"
           @change="onFormInteraction"
-        />
+        >
+          <div class="agreement-wrapper">
+            <div v-for="(option, optIndex) in qualityScale" :key="optIndex" class="option-label-wrapper">
+              <div class="option-label">{{ option.text }}</div>
+              <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+            </div>
+          </div>
+        </b-form-radio-group>
 
         <p class="mt-3">To what extent do you agree with the following statements regarding the discussion?</p>
         <div v-for="(statement, index) in conversationStatements" :key="index" class="mb-3">
           <p>{{ statement }}</p>
           <b-form-radio-group
             v-model="conversationResponses[index]"
-            :options="agreementScale"
-            stacked
-            required
+            :name="'conversation_' + index"
+            buttons
+            button-variant="outline-black"
+            size="md"
+            class="agreement-options custom-radio-button"
             @change="onFormInteraction"
-          />
+          >
+            <div class="agreement-wrapper">
+              <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+              </div>
+            </div>
+          </b-form-radio-group>
         </div>
       </div>
 
@@ -71,11 +110,20 @@
           <p>{{ statement }}</p>
           <b-form-radio-group
             v-model="reciprocityResponses[index]"
-            :options="agreementScale"
-            stacked
-            required
+            :name="'reciprocity_' + index"
+            buttons
+            button-variant="outline-black"
+            size="md"
+            class="agreement-options custom-radio-button"
             @change="onFormInteraction"
-          />
+          >
+            <div class="agreement-wrapper">
+              <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+              </div>
+            </div>
+          </b-form-radio-group>
         </div>
       </div>
 
@@ -91,7 +139,8 @@
         </b-button>
       </div>
     </div>
-  </b-jumbotron>
+    </b-jumbotron>
+  </div>
 </template>
 
 <script>
@@ -175,7 +224,7 @@ export default {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 15 seconds or you may be removed.', {
+      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
         title: 'Inactivity Warning',
         variant: 'warning',
         solid: true,
@@ -184,7 +233,7 @@ export default {
     },
     handleInactiveUser () {
       // Redirect to timeout page
-      this.$router.push('/timeout')
+      this.$router.push('/TerminatedParticipation')
     },
     async submitSurvey () {
       // Record activity when submitting
@@ -232,6 +281,57 @@ export default {
 </script>
 
 <style scoped>
+  .centered-survey-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: #f5f7fa;
+    width: 100vw;
+  }
+  .intro-center-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 10vh;
+    width: 100vw;
+  }
+  .highlighted-lead {
+    background: #fffbe6;
+    border: 2px solid #ffe066;
+    border-radius: 12px;
+    padding: 1.25rem 2rem;
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+    font-size: 1.15rem;
+    color: #7c6700;
+    box-shadow: 0 2px 8px rgba(255, 217, 0, 0.08);
+    text-align: center;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    max-width: 900px;
+  }
+  .intro-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #7c6700;
+  }
+  .questions-area {
+    margin-top: 1rem;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .content-area {
+    padding: 1.25rem 2rem;
+    width: 100%;
+    max-width: 2000px;
+  }
+
 .section {
   margin-bottom: 2rem;
   padding: 1rem;
@@ -247,5 +347,57 @@ export default {
   padding: 1rem;
   background-color: #f8f9fa;
   border-radius: 0.25rem;
+  text-align: center;
+}
+
+.policy-statement > p,
+.question-block > p,
+.section > p {
+  font-size: 1.25rem;
+  text-align: center;
+}
+.section > h4 {
+  font-size: 1.35rem;
+  text-align: center;
+}
+
+.mb-3 > p {
+  font-size: 1.2rem;
+  text-align: center !important;
+}
+.agreement-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+
+.option-label-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 90px;
+  text-align: center;
+}
+
+.option-label {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 4px;
+  height: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.agreement-options {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 </style>

@@ -1,20 +1,17 @@
 <template>
-  <b-jumbotron header-level="5">
-    <template v-slot:header>
-      Welcome to our group discussion study!
-    </template>
-    <div class="content-area">
+  <b-jumbotron header="Welcome to our group discussion study!" header-level="4" class="mb-4">
+    <div class="content-area bg-light p-4 rounded">
       <p>
         Welcome to our group discussion study and get ready for an exciting communication adventure!
       </p>
       <p>
         In this study, you will be asked to complete a series of tasks, including:
       </p>
-      <ul>
-        <li>Sharing your attitudes and perspectives on specific topics,</li>
-        <li>Participating in a discussion task using a customized chat interface, and</li>
-        <li>Reflecting on your experience and providing feedback in a post-discussion survey.</li>
-      </ul>
+      <b-list-group class="mb-3">
+        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded">Sharing your attitudes and perspectives on specific topics.</b-list-group-item>
+        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded">Participating in a discussion task using a customized chat interface.</b-list-group-item>
+        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded">Reflecting on your experience and providing feedback in a post-discussion survey.</b-list-group-item>
+      </b-list-group>
       <p>
         The entire process is expected to take approximately 20–25 minutes. Your responses will remain confidential and will be used exclusively for research purposes to ensure the integrity and impact of the findings.
         You may take part in this study only once.
@@ -23,7 +20,7 @@
         Sounds interesting? Click the button below to start the study!
       </p>
     </div>
-    <div class="button-area">
+    <div class="button-area text-center mt-4">
       <b-button variant="primary" name="next" v-on:click="next">Start the Study</b-button>
     </div>
   </b-jumbotron>
@@ -67,7 +64,7 @@ export default {
           .then(response => {
             if (response.data.success === true) {
               this.$store.commit('assign_subject_id', {subject_id: response.data.subject_id})
-              this.$router.push('/PreDSurvey')
+              this.$router.push('/DemograSurvey')
             } else {
               this.$alert(response.data.message || 'Error creating subject', '', 'warning')
             }
@@ -94,5 +91,6 @@ export default {
 <style scoped>
 .button-area {
   text-align: center;
+  margin-top: 20px;
 }
 </style>

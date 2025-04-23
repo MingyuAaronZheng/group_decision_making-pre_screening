@@ -1,134 +1,164 @@
 <template>
-  <b-jumbotron header-level="5">
-    <template v-slot:lead>
-      Final Reflection
-      After selecting your position for all the statements, please take a moment to reflect on your response.
-    </template>
-
-    <div class="content-area">
-      <!-- Reflection Section -->
-      <div class="section">
-        <p v-if="allResponsesSame" class="reflection-prompt">
-          We notice that your agreement levels of all statements remained the same following the discussion.
-          In the text box below, describe what specific aspects of the discussion influenced you to maintain your position.
-          Please provide as much detail as you feel is necessary.
-        </p>
-        <p v-else-if="allResponsesChanged" class="reflection-prompt">
-          We notice that your agreement levels of all statements changed following the discussion.
-          In the text box below, describe what specific aspects of the discussion caused the change in your perspectives.
-          Please provide as much detail as you feel is necessary.
-        </p>
-        <p v-else class="reflection-prompt">
-          {{ generateChangeSummary() }}
-          In the text box below, describe what specific aspects of the discussion caused the change in your perspectives on certain statements,
-          and explain why your perspectives on other statements remained unchanged. Please provide as much detail as you feel is necessary.
-        </p>
-
-        <b-form-textarea
-          v-model="reflection"
-          rows="6"
-          max-rows="8"
-          placeholder="Enter your reflection here..."
-          @input="onFormInteraction"
-        />
-      </div>
-
-      <!-- Attention Check 1 -->
-      <div class="section">
-        <p><strong>Attention Check:</strong> What is 35 + 47?</p>
-        <b-form-radio-group v-model="attentionCheck1" :options="attentionCheck1Options" stacked @change="onFormInteraction" />
-      </div>
-
-      <!-- Critical Thinking -->
-      <div class="section">
-        <h4>Critical Thinking Level</h4>
-        <p>To what extent do you agree with the following statements regarding your experience?</p>
-        <div v-for="(statement, index) in criticalThinkingStatements" :key="index" class="mb-3">
-          <p>{{ statement }}</p>
-          <b-form-radio-group
-            v-model="criticalThinkingResponses[index]"
-            :options="agreementScale"
-            stacked
-            required
-            @change="onFormInteraction"
-          />
-        </div>
-      </div>
-
-      <!-- Attention Check 2 -->
-      <div class="section">
-        <p><strong>Attention Check:</strong> Please select 'Strongly Agree' for this statement.</p>
-        <p>Statement: I have read the instructions carefully.</p>
-        <b-form-radio-group v-model="attentionCheck2" :options="agreementScale" stacked @change="onFormInteraction" />
-      </div>
-
-      <!-- AI Tool Usage -->
-      <div class="section">
-        <p>We'd like to know if you have used a generative AI tool (e.g., ChatGPT, Gemini, Claude) to assist in writing your response for this study.
-           Please let us know. You will be compensated regardless.</p>
-        <b-form-radio-group v-model="usedAITool" :options="aiToolOptions" stacked @change="onFormInteraction" />
-      </div>
-
-      <!-- AI Interaction Quality (Conditional) -->
-      <div v-if="hasAIParticipant || hasAIModerator" class="section">
-        <div v-if="hasAIParticipant">
-          <h4>Conversation Quality With the AI Participant</h4>
-          <div v-for="(statement, index) in aiParticipantStatements" :key="index" class="mb-3">
-            <p>{{ statement }}</p>
-            <b-form-radio-group
-              v-model="aiParticipantResponses[index]"
-              :options="agreementScale"
-              stacked
-              required
-              @change="onFormInteraction"
-            />
-          </div>
-        </div>
-
-        <div v-if="hasAIModerator">
-          <h4>Conversation Quality With the AI Moderator</h4>
-          <div v-for="(statement, index) in aiModeratorStatements" :key="index" class="mb-3">
-            <p>{{ statement }}</p>
-            <b-form-radio-group
-              v-model="aiModeratorResponses[index]"
-              :options="agreementScale"
-              stacked
-              required
-              @change="onFormInteraction"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Cost of Communication -->
-      <div class="section">
-        <h4>Cost of Communication Technologies</h4>
-        <p>{{ generateCostPrompt() }}</p>
-        <div v-for="(statement, index) in costStatements" :key="index" class="mb-3">
-          <p>{{ statement }}</p>
-          <b-form-radio-group
-            v-model="costResponses[index]"
-            :options="agreementScale"
-            stacked
-            required
-            @change="onFormInteraction"
-          />
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <div class="button-area mt-4">
-        <b-button
-          variant="primary"
-          size="lg"
-          @click="submitSurvey"
-          :disabled="!isFormValid"
-        >
-          Submit Survey
-        </b-button>
-      </div>
+  <div class="centered-survey-wrapper">
+    <div class="intro-center-frame">
+      <b-jumbotron header-level="5" class="highlighted-lead">
+        <template v-slot:lead>
+          <div class="intro-title">Final Reflection</div>
+          After selecting your position for all the statements, please take a moment to reflect on your response.
+        </template>
+      </b-jumbotron>
     </div>
-  </b-jumbotron>
+    <b-jumbotron header-level="5" class="questions-area">
+      <div class="content-area">
+        <!-- Reflection Section -->
+        <div class="section">
+          <p v-if="allResponsesSame" class="reflection-prompt">
+            We notice that your agreement levels of all statements remained the same following the discussion.
+            In the text box below, describe what specific aspects of the discussion influenced you to maintain your position.
+            Please provide as much detail as you feel is necessary.
+          </p>
+          <p v-else-if="allResponsesChanged" class="reflection-prompt">
+            We notice that your agreement levels of all statements changed following the discussion.
+            In the text box below, describe what specific aspects of the discussion caused the change in your perspectives.
+            Please provide as much detail as you feel is necessary.
+          </p>
+          <p v-else class="reflection-prompt">
+            {{ generateChangeSummary() }}
+            In the text box below, describe what specific aspects of the discussion caused the change in your perspectives on certain statements,
+            and explain why your perspectives on other statements remained unchanged. Please provide as much detail as you feel is necessary.
+          </p>
+
+          <b-form-textarea
+            v-model="reflection"
+            rows="6"
+            max-rows="8"
+            placeholder="Enter your reflection here..."
+            @input="onFormInteraction"
+          />
+        </div>
+
+        <!-- Attention Check 1 -->
+        <div class="section">
+          <p><strong>Attention Check:</strong> What is 35 + 47?</p>
+          <b-form-radio-group v-model="attentionCheck1" :name="'attentionCheck1'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
+            <div class="agreement-wrapper">
+              <div v-for="(option, optIndex) in attentionCheck1Options" :key="optIndex" class="option-label-wrapper">
+                <div class="option-label">{{ option.text }}</div>
+                <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+              </div>
+            </div>
+          </b-form-radio-group>
+        </div>
+
+        <!-- Critical Thinking -->
+        <div class="section">
+          <h4>Critical Thinking Level</h4>
+          <p>To what extent do you agree with the following statements regarding your experience?</p>
+          <div v-for="(statement, index) in criticalThinkingStatements" :key="index" class="mb-3">
+            <p>{{ statement }}</p>
+            <b-form-radio-group v-model="criticalThinkingResponses[index]" :name="'critical_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
+              <div class="agreement-wrapper">
+                <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                  <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                </div>
+              </div>
+            </b-form-radio-group>
+          </div>
+        </div>
+
+        <!-- Attention Check 2 -->
+        <div class="section">
+          <p><strong>Attention Check:</strong> Please select 'Strongly Agree' for this statement.</p>
+          <p>Statement: I have read the instructions carefully.</p>
+          <b-form-radio-group v-model="attentionCheck2" :name="'attentionCheck2'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
+            <div class="agreement-wrapper">
+              <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+              </div>
+            </div>
+          </b-form-radio-group>
+        </div>
+
+        <!-- AI Tool Usage -->
+        <div class="section">
+          <p>We'd like to know if you have used a generative AI tool (e.g., ChatGPT, Gemini, Claude) to assist in writing your response for this study.
+             Please let us know. You will be compensated regardless.</p>
+          <b-form-radio-group v-model="usedAITool" :name="'usedAITool'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
+            <div class="agreement-wrapper">
+              <div v-for="(option, optIndex) in aiToolOptions" :key="optIndex" class="option-label-wrapper">
+                <div class="option-label">{{ option.text }}</div>
+                <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+              </div>
+            </div>
+          </b-form-radio-group>
+        </div>
+
+        <!-- AI Interaction Quality (Conditional) -->
+        <div v-if="hasAIParticipant || hasAIModerator" class="section">
+          <div v-if="hasAIParticipant">
+            <h4>Conversation Quality With the AI Participant</h4>
+            <div v-for="(statement, index) in aiParticipantStatements" :key="index" class="mb-3">
+              <p>{{ statement }}</p>
+              <b-form-radio-group v-model="aiParticipantResponses[index]" :name="'aiParticipant_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
+                <div class="agreement-wrapper">
+                  <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </div>
+          </div>
+
+          <div v-if="hasAIModerator">
+            <h4>Conversation Quality With the AI Moderator</h4>
+            <div v-for="(statement, index) in aiModeratorStatements" :key="index" class="mb-3">
+              <p>{{ statement }}</p>
+              <b-form-radio-group v-model="aiModeratorResponses[index]" :name="'aiModerator_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
+                <div class="agreement-wrapper">
+                  <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cost of Communication -->
+        <div class="section">
+          <h4>Cost of Communication Technologies</h4>
+          <p>{{ generateCostPrompt() }}</p>
+          <div v-for="(statement, index) in costStatements" :key="index" class="mb-3">
+            <p>{{ statement }}</p>
+            <b-form-radio-group v-model="costResponses[index]" :name="'cost_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
+              <div class="agreement-wrapper">
+                <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
+                  <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                </div>
+              </div>
+            </b-form-radio-group>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="button-area mt-4">
+          <b-button
+            variant="primary"
+            size="lg"
+            @click="submitSurvey"
+            :disabled="!isFormValid"
+          >
+            Submit Survey
+          </b-button>
+        </div>
+      </div>
+    </b-jumbotron>
+  </div>
 </template>
 
 <script>
@@ -340,7 +370,7 @@ export default {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 15 seconds or you may be removed.', {
+      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
         title: 'Inactivity Warning',
         variant: 'warning',
         solid: true,
@@ -349,7 +379,7 @@ export default {
     },
     handleInactiveUser () {
       // Redirect to timeout page
-      this.$router.push('/timeout')
+      this.$router.push('/TerminatedParticipation')
     }
   },
   mounted () {
@@ -366,16 +396,132 @@ export default {
 </script>
 
 <style scoped>
+.centered-survey-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: #f5f7fa;
+  width: 100vw;
+}
+.intro-center-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 10vh;
+  width: 100vw;
+}
+.highlighted-lead {
+  background: #fffbe6;
+  border: 2px solid #ffe066;
+  border-radius: 12px;
+  padding: 1.25rem 2rem;
+  margin-top: 4rem;
+  margin-bottom: 1rem;
+  font-size: 1.15rem;
+  color: #7c6700;
+  box-shadow: 0 2px 8px rgba(255, 217, 0, 0.08);
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  max-width: 900px;
+}
+.intro-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #7c6700;
+}
+.questions-area {
+  margin-top: 1rem;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.content-area {
+  padding: 1.25rem 2rem;
+  width: 100%;
+  max-width: 2000px;
+}
 .section {
+  transition: box-shadow 0.2s, transform 0.2s;
   margin-bottom: 2rem;
   padding: 1rem;
   border: 1px solid #dee2e6;
   border-radius: 0.25rem;
+}
+.section:hover,
+.section:focus-within {
+  box-shadow: 0 8px 24px rgba(80, 80, 80, 0.12), 0 1.5px 8px rgba(80,80,80,0.10);
+  transform: translateY(-4px) scale(1.02);
+  z-index: 2;
 }
 
 .reflection-prompt {
   font-style: italic;
   color: #495057;
   margin-bottom: 1rem;
+}
+
+.questions-area ::v-deep .btn-group {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.questions-area ::v-deep .btn-group-vertical {
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.questions-area ::v-deep .btn-outline-black {
+  position: relative;
+}
+
+.agreement-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+
+.option-label-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 90px;
+  text-align: center;
+}
+
+.option-label {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 4px;
+  height: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.agreement-options {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.custom-radio-button {
+  margin: 0 !important;
+  padding: 0.5rem !important;
 }
 </style>

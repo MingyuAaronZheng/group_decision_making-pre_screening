@@ -34,14 +34,6 @@
     </b-alert>
 
     <div v-if="!isPairing && !isTimedOut" class="text-center mt-4">
-      <b-button variant="primary" @click="startPairing">
-        Find Discussion Partners
-      </b-button>
-
-      <!-- Test button for debugging -->
-      <b-button variant="outline-secondary" class="ml-2" @click="testSetAvatar">
-        Test Avatar Assignment
-      </b-button>
     </div>
   </b-jumbotron>
 </template>
@@ -100,26 +92,6 @@ export default {
         })
         .catch(error => {
           console.error('Error during pairing:', error)
-          if (this.$root.test_mode) {
-          // For testing, simulate a successful pairing after 5 seconds
-            setTimeout(() => {
-              this.updateStore({
-                group_id: 1,
-                participant_condition: 1,
-                moderator_condition: 1,
-                chat_statement_indx: 0,
-                is_third_person: false,
-                assigned_avatars: [{
-                  subject_id: this.$store.state.subject_id,
-                  color: 'blue',
-                  name: 'tiger'
-                }]
-              })
-              this.completePairing()
-            }, 5000)
-          } else {
-            this.failPairing()
-          }
         })
     },
 
@@ -205,27 +177,13 @@ export default {
         .catch(error => {
           console.error('Error setting ready to pair:', error)
         })
-    },
-
-    testSetAvatar () {
-      console.log('Setting test avatar data')
-      this.$store.commit('update_avatar', {
-        avatar_color: 'blue',
-        avatar_name: 'penguin'
-      })
-      console.log('Test avatar set:', this.$store.state.avatar_name, this.$store.state.avatar_color)
-
-      // Navigate to avatar assignment page
-      this.$router.push('/avatar-assignment')
     }
   },
 
   mounted () {
-  // Initialize test mode if needed
     this.startPairing()
     // Add event listeners to detect when user leaves the page
     window.addEventListener('beforeunload', this.setNotReadyToPair)
-    window.addEventListener('pagehide', this.setNotReadyToPair)
   },
 
   beforeDestroy () {
@@ -233,7 +191,6 @@ export default {
     clearTimeout(this.timeout)
     // Remove event listeners
     window.removeEventListener('beforeunload', this.setNotReadyToPair)
-    window.removeEventListener('pagehide', this.setNotReadyToPair)
   }
 }
 </script>

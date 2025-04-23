@@ -379,7 +379,7 @@ export default {
       this.$root.sendWebSocketMessage(ready_message)
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please respond within 15 seconds or you may be removed from the discussion.', {
+      this.$bvToast.toast('Warning: You appear to be inactive. Please respond within 30 seconds or you may be removed from the discussion.', {
         title: 'Inactivity Warning',
         variant: 'warning',
         solid: true,
@@ -397,7 +397,7 @@ export default {
       }
       this.$root.sendWebSocketMessage(inactive_message)
       // Redirect to a timeout page
-      this.$router.push('/timeout')
+      this.$router.push('/TerminatedParticipation')
     },
     handleTyping (user) {
       // Store the typing user

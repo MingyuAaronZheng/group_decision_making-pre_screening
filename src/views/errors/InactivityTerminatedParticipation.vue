@@ -1,16 +1,18 @@
 <template>
-  <b-jumbotron header-level="5" class="text-center">
+  <b-jumbotron header-level="5">
     <template v-slot:lead>
-      Failed attention checks
+      Study Terminated
     </template>
     <div class="content-area">
-      <div class="alert alert-danger" style="text-align: center;">
+      <div class="alert alert-danger">
         <h4>Your participation has been terminated</h4>
         <p>
-          Because you did not pass our attention checks, your compensation will be decreased according to the portion of the study you completed.
+          Due to inactivity, your participation has been terminated. As mentioned in the consent form,
+          the compensation will be decreased for participants who do not complete the entire study.
         </p>
         <p>
-          If you believe this is an error, please contact the study administrators with your participant ID: {{ $store.state.subject_id }}
+          If you believe this is an error, please contact the study administrators with your
+          participant ID: {{ $store.state.subject_id }}
         </p>
         <p>Please push the button below to redirect to prolific.</p>
         <b-button
@@ -23,15 +25,17 @@
     </div>
   </b-jumbotron>
 </template>
+
 <script>
 import axios from 'axios'
+
 export default {
-  name: 'FailAttention',
+  name: 'InactivityTerminatedParticipation',
   methods: {
     submit: function (event) {
       let body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
-      body.append('status', 'failed_attention')
+      body.append('status', 'inactive_terminate')
       axios.post(this.$root.server_url + 'submit_to_prolific', body)
         .then(response => {
           if (response.data.success === true) {
@@ -44,6 +48,16 @@ export default {
           alert('Some error happened!! Please leave comments and submit the HIT on Prolific.' + e)
         })
     }
+  },
+  created () {
+    // Optionally notify server about termination
+    if (this.$store.state.subject_id) {
+      axios.post(this.$root.server_url + 'terminate_participation', {
+        subject_id: this.$store.state.subject_id
+      }).catch(error => {
+        console.error('Error notifying termination:', error)
+      })
+    }
   }
 }
 </script>
@@ -55,6 +69,6 @@ export default {
   padding: 2rem;
 }
 .alert {
-  text-align: center;
+  text-align: left;
 }
 </style>

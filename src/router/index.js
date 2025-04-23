@@ -12,8 +12,6 @@ import WaitingRoom from '../views/WaitingRoom.vue'
 /** Errors **/
 import FailPairing from '../views/errors/FailPairing.vue'
 import FailAttention from '../views/errors/FailAttention.vue'
-import PreviousPage from '../views/errors/PreviousPage.vue'
-import TerminatedParticipation from '@/views/errors/TerminatedParticipation.vue'
 /** Without AI **/
 
 import PreDSurvey from '@/views/PreDSurvey.vue'
@@ -23,6 +21,8 @@ import DemograSurvey from '@/views/DemograSurvey.vue'
 import ChatRoom from '@/views/ChatRoom.vue'
 import AvatarAssignment from '@/views/avatar-assignment.vue'
 import DeBriefing from '@/views/DeBriefing.vue'
+import GoBackTerminatedParticipation from '@/views/errors/GoBackTerminatedParticipation.vue'
+import InactivityTerminatedParticipation from '@/views/errors/InactivityTerminatedParticipation.vue'
 
 Vue.use(VueRouter)
 Vue.use(VueSimpleAlert)
@@ -66,14 +66,14 @@ const routes = [
     component: FailAttention
   },
   {
-    path: '/PreviousPage',
-    name: 'PreviousPage',
-    component: PreviousPage
+    path: '/GoBackTerminatedParticipation',
+    name: 'GoBackTerminatedParticipation',
+    component: GoBackTerminatedParticipation
   },
   {
-    path: '/terminatedParticipation',
-    name: 'TerminatedParticipation',
-    component: TerminatedParticipation
+    path: '/InactivityTerminatedParticipation',
+    name: 'InactivityTerminatedParticipation',
+    component: InactivityTerminatedParticipation
   },
   {
     path: '/PreDSurvey',
