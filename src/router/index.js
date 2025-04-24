@@ -134,7 +134,7 @@ router.beforeEach((to, from, next) => {
   let toIndex
 
   // Define EndingPages as an array of pages that are not part of the study flow
-  const EndingPages = ['KickOut', 'FailPairing', 'FailAttention', 'NoEntrance', 'TerminatedParticipation', 'DeBriefing']
+  const EndingPages = ['KickOut', 'FailPairing', 'FailAttention', 'NoEntrance', 'GoBackTerminatedParticipation', 'InactivityTerminatedParticipation', 'DeBriefing']
   // If the page is an ending page, set the index to 1000
   if (EndingPages.includes(from.name)) {
     fromIndex = 1000
@@ -155,7 +155,7 @@ router.beforeEach((to, from, next) => {
       'warning'
     ).then((result) => {
       if (result) {
-        next('/terminatedParticipation')
+        next('/GoBackTerminatedParticipation')
       } else {
         next(false)
       }

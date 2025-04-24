@@ -186,7 +186,7 @@ const store = new Vuex.Store({
             window.dispatchEvent(new CustomEvent('show-inactivity-warning'))
           }
 
-          // Remove user after 1 minute of inactivity
+          // Remove user after 1.25 minute of inactivity
           if (timeSinceLastActivity >= 75000) {
             // Clear the interval before removing user to prevent multiple triggers
             clearInterval(state.inactivityCheckInterval)

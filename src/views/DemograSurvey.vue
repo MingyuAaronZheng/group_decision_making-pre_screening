@@ -596,7 +596,7 @@ export default {
       body.append('subject_id', this.$store.state.subject_id)
       axios.post(this.$root.server_url + 'terminate_participation', body)
         .then(() => {
-          this.$router.push('/TerminatedParticipation')
+          this.$router.push('/InactivityTerminatedParticipation')
         })
         .catch(error => console.error(error))
     },

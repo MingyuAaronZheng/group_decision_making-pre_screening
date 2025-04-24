@@ -397,7 +397,7 @@ export default {
       }
       this.$root.sendWebSocketMessage(inactive_message)
       // Redirect to a timeout page
-      this.$router.push('/TerminatedParticipation')
+      this.$router.push('/InactivityTerminatedParticipation')
     },
     handleTyping (user) {
       // Store the typing user

@@ -379,7 +379,7 @@ export default {
     },
     handleInactiveUser () {
       // Redirect to timeout page
-      this.$router.push('/TerminatedParticipation')
+      this.$router.push('/InactivityTerminatedParticipation')
     }
   },
   mounted () {
