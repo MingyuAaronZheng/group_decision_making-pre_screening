@@ -353,19 +353,8 @@ new Vue({
         }
         // Add to Vuex store
         this.$store.commit('new_message', received_msg)
-        const formData = new FormData()
-        formData.append('group_id', this.$store.state.group_id)
-        axios.post(this.$root.server_url + 'get_group_current_turn', formData)
-          .then(response => {
-            if (response.data.success) {
-              this.$store.state.current_turn = response.data.current_turn
-              console.log('frontend Current turn:', this.$store.state.current_turn)
-              console.log('backend Current turn:', response.data.current_turn)
-            }
-          })
-          .catch(error => {
-            console.error('Error getting current turn:', error)
-          })
+      } else if (message.code === 210) { // Turn update
+        this.$store.state.current_turn = message.current_turn
         console.log('Current turn:', this.$store.state.current_turn)
       } else if (message.code === 778) { // Devil's advocate message
         let received_msg = message.message
