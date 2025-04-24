@@ -47,12 +47,19 @@ export default {
   methods: {
     prolific_processor: function (url) {
       // https://dev.d1uau7ss3lp78y.amplifyapp.com/qualificationentrance/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}&TEST={{%TEST%}}&TEST_MODERATOR_CODE={{%TEST_MODERATOR%}}&TEST_PARTICIPANT_CODE={{%TEST_PARTICIPANT%}}&TEST_POLICY_NUMBER={{%TEST_POLICY%}}&TEST_TURN_NUMBER={{%TEST_TURN%}}
-      this.platform = 'prolific'
+      if (url.includes('localhost')) {
+        this.platform = 'localhost'
+      } else {
+        this.platform = 'aws'
+      }
+
+      this.$store.commit('assign_platform', {platform: this.platform})
       let prolificArray = url.split('?')[1].split('&')
       this.worker_id = prolificArray[0].split('=')[1]
       this.study_id = prolificArray[1].split('=')[1]
       this.session_id = prolificArray[2].split('=')[1]
       this.test = prolificArray[3] ? prolificArray[3].split('=')[1] : 'N'
+      console.log('Test:', this.test)
       if (this.test === 'Y') {
         this.test_moderator_code = prolificArray[4] ? prolificArray[4].split('=')[1] : 0
         this.test_participant_code = prolificArray[5] ? prolificArray[5].split('=')[1] : 1
@@ -60,7 +67,21 @@ export default {
         this.test_turn_number = prolificArray[7] ? prolificArray[7].split('=')[1] : 1
       }
     },
+
     next: function () {
+      // update store
+      if (this.test === 'Y') {
+        this.$store.commit('assign_test_variables', {
+          test: this.test,
+          test_moderator_code: this.test_moderator_code,
+          test_participant_code: this.test_participant_code,
+          test_policy_number: this.test_policy_number,
+          test_turn_number: this.test_turn_number
+        })
+        console.log('Test variables assigned:', this.test_moderator_code, this.test_participant_code, this.test_policy_number, this.test_turn_number)
+      }
+
+      // update backend and create subject
       let body = new FormData()
       if (this.$store.state.subject_id === null) { // If no subject id is stored in state, it means this is a new login
         if (typeof this.worker_id === 'undefined' || this.worker_id === null || this.worker_id === '') {
@@ -77,7 +98,8 @@ export default {
           body.append('test_policy_number', this.test_policy_number)
           body.append('test_turn_number', this.test_turn_number)
         }
-        axios.post(this.$root.server_url + 'create_subject', body)
+        console.log(this.$server_url)
+        axios.post(this.$server_url + 'create_subject', body)
           .then(response => {
             if (response.data.success === true) {
               this.$store.commit('assign_subject_id', {subject_id: response.data.subject_id})

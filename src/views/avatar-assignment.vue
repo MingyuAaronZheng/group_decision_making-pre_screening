@@ -277,7 +277,7 @@ export default {
         const formData = new FormData()
         formData.append('subject_id', this.$store.state.subject_id)
         formData.append('group_id', this.$store.state.group_id)
-        const response = await axios.post(this.$root.server_url + 'confirm_instructions', formData)
+        const response = await axios.post(this.$server_url + 'confirm_instructions', formData)
 
         if (response.data.success) {
           this.hasConfirmedInstructions = true
@@ -295,7 +295,7 @@ export default {
         const formData = new FormData()
         formData.append('subject_id', this.$store.state.subject_id)
         formData.append('group_id', this.$store.state.group_id)
-        const response = await axios.post(this.$root.server_url + 'confirm_instructions', formData)
+        const response = await axios.post(this.$server_url + 'confirm_instructions', formData)
 
         if (response.data.success && response.data.all_confirmed) {
           this.allConfirmed = true

@@ -77,7 +77,7 @@ export default {
       }
       let body = new FormData()
       body.append('subject_id', subjectId)
-      axios.post(this.$root.server_url + 'pairing', body)
+      axios.post(this.$server_url + 'pairing', body)
         .then(response => {
           console.log('Pairing response:', response.data)
           this.updateAverageWaitingTime(response.data.average_waiting_time)
@@ -170,7 +170,7 @@ export default {
       }
       let body = new FormData()
       body.append('subject_id', subjectId)
-      axios.post(this.$root.server_url + 'set_ready_to_pair', body)
+      axios.post(this.$server_url + 'set_ready_to_pair', body)
         .then(response => {
           // console.log('Set ready to pair response:', response.data)
         })

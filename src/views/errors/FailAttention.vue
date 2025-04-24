@@ -32,7 +32,7 @@ export default {
       let body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
       body.append('status', 'failed_attention')
-      axios.post(this.$root.server_url + 'submit_to_prolific', body)
+      axios.post(this.$server_url + 'submit_to_prolific', body)
         .then(response => {
           if (response.data.success === true) {
             window.location.href = response.data.prolific_url

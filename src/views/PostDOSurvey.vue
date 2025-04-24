@@ -253,7 +253,7 @@ export default {
       formData.append('conversation_responses', JSON.stringify(this.conversationResponses))
       formData.append('reciprocity_responses', JSON.stringify(this.reciprocityResponses))
       axios
-        .post(this.$root.server_url + 'post_do_survey', formData)
+        .post(this.$server_url + 'post_do_survey', formData)
         .then((response) => {
           if (response.data.success) {
             this.$store.commit('setPostDiscussionResponses', this.policyResponses)

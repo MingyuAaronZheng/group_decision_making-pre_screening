@@ -222,8 +222,7 @@ export default {
     // ***** TODO: Currently, can exit only when it is the 5th turn (i.e., one person sends a message after finishing 4th turn),
     //        but it should be after 4th turn and before 5th turn (i.e., no one needs to send a message for the 5th turn)
     canExit () {
-      return this.$store.state.current_turn > 1
-      // Use 1 for TEST
+      return this.$store.state.current_turn > this.$store.state.conversation_exit_turn_number
     },
     // readyMembers () {
     //   return this.$root.members.filter(m => m.is_ready_to_end && m.subject_id > 0)
@@ -287,7 +286,7 @@ export default {
       const formData = new FormData()
       formData.append('group_id', this.$store.state.group_id)
       formData.append('chatting', true)
-      axios.post(this.$root.server_url + 'update_chat_status', formData)
+      axios.post(this.$server_url + 'update_chat_status', formData)
         .then(response => {
           console.log('Chat status updated:', response.data)
         })
@@ -299,7 +298,7 @@ export default {
       const formData = new FormData()
       formData.append('group_id', this.$store.state.group_id)
       formData.append('chatting', false)
-      axios.post(this.$root.server_url + 'update_chat_status', formData)
+      axios.post(this.$server_url + 'update_chat_status', formData)
         .then(response => {
           console.log('Chat status deactivated:', response.data)
         })
@@ -455,7 +454,7 @@ export default {
     const groupId = this.$store.state.group_id
     const formData = new FormData()
     formData.append('group_id', groupId)
-    axios.post(`${this.$root.server_url}get_group_member_agreements`, formData)
+    axios.post(`${this.$server_url}get_group_member_agreements`, formData)
       .then(response => {
         console.log('Group member agreements response:', response.data)
         if (response.data && response.data.members) {

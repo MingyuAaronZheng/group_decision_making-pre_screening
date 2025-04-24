@@ -339,7 +339,7 @@ export default {
         formData.append('ai_moderator_responses', JSON.stringify(this.aiModeratorResponses))
         formData.append('cost_responses', JSON.stringify(this.costResponses))
         const response = await axios.post(
-          this.$root.server_url + 'post_df_survey',
+          this.$server_url + 'post_df_survey',
           formData
         )
         console.log('Response:', response.data.success)

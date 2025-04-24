@@ -41,7 +41,7 @@ export default {
       let body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
       body.append('status', 'timeout')
-      axios.post(this.$root.server_url + 'submittomtruk', body)
+      axios.post(this.$server_url + 'submittomtruk', body)
         .then(response => {
           window.location.href = response.data.mturk_url
         })
@@ -63,7 +63,7 @@ export default {
     this.$root.websock.close(4001)
     let body = new FormData()
     body.append('subject_id', this.$store.state.subject_id)
-    axios.post(this.$root.server_url + 'show_bonus', body)
+    axios.post(this.$server_url + 'show_bonus', body)
       .then(response => {
         let tasks = response.data.detail
         for (let i = 0; i < tasks.length; i++) {

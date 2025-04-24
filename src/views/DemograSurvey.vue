@@ -594,7 +594,7 @@ export default {
     handleInactiveUser () {
       const body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
-      axios.post(this.$root.server_url + 'terminate_participation', body)
+      axios.post(this.$server_url + 'terminate_participation', body)
         .then(() => {
           this.$router.push('/InactivityTerminatedParticipation')
         })
@@ -626,7 +626,7 @@ export default {
       body.append('aiInHomeDevices', this.aiInHomeDevices)
       body.append('aiMentalCapacityResponses', JSON.stringify(this.aiMentalCapacityResponses))
 
-      axios.post(this.$root.server_url + 'updateDemograSurvey', body)
+      axios.post(this.$server_url + 'updateDemograSurvey', body)
         .then(response => {
           if (!response.data.success) {
             throw new Error(response.data.message || 'Error submitting demographic survey')

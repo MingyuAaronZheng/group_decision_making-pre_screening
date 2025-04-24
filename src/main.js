@@ -45,11 +45,11 @@ library.add(faGavel)
 library.add(faRobot)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
-// Add global properties
-Vue.prototype.$server_url = 'https://gobackend.discussionexperiment.com/ccw/api/'
-Vue.prototype.$ws_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
-Vue.prototype.$chat_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
-Vue.prototype.$test_mode = false
+// // Add global properties
+// Vue.prototype.$server_url = 'https://gobackend.discussionexperiment.com/ccw/api/'
+// Vue.prototype.$ws_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
+// Vue.prototype.$chat_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
+// Vue.prototype.$test_mode = false
 
 // Vue.prototype.$server_url = 'http://127.0.0.1:8000/ccw/api/'
 // Vue.prototype.$ws_url = 'ws://127.0.0.1:8000/ws/chat/'
@@ -73,17 +73,14 @@ const store = new Vuex.Store({
       participant_number_condition: -1,
       participant_condition: -1,
       moderator_condition: -1,
-      // masterStatements: [
-      //   'Should abortion be legal?',
-      //   'Should governments have the authority to censor online content?',
-      //   'Should the government employ a stricter immigration/border policy?',
-      //   'Do tariffs on imported goods protect American jobs and industries from foreign competition?',
-      //   'Should the government cut tax for the wealthy?',
-      //   'Is unpredictability in U.S. foreign policy an effective deterrent against hostile actions from other nations?'
-      // ], // Store master statements
       masterStatements: [
-        'Should abortion be legal?'
-      ], // use only one statement for TEST
+        'Should abortion be legal?',
+        'Should governments have the authority to censor online content?',
+        'Should the government employ a stricter immigration/border policy?',
+        'Do tariffs on imported goods protect American jobs and industries from foreign competition?',
+        'Should the government cut tax for the wealthy?',
+        'Is unpredictability in U.S. foreign policy an effective deterrent against hostile actions from other nations?'
+      ], // Store master statements
       heartbeatInterval: null,
       chat_statement_index: null,
       chat_statement: null,
@@ -96,7 +93,14 @@ const store = new Vuex.Store({
       websocket: null,
       websocketConnected: false,
       WebSocketOnMessageRunningTimes: 0,
-      current_turn: 1
+      current_turn: 1,
+      conversation_exit_turn_number: 4,
+      test: 'N',
+      test_moderator_code: -1,
+      test_participant_code: -1,
+      test_policy_number: -1,
+      test_turn_number: -1,
+      platform: ''
     }
   },
   mutations: {
@@ -210,6 +214,42 @@ const store = new Vuex.Store({
     },
     setWebSocketConnected (state, status) {
       state.websocketConnected = status
+    },
+    assign_test_variables (state, payload) {
+      state.test = payload.test
+      state.test_moderator_code = Number(payload.test_moderator_code)
+      state.test_participant_code = Number(payload.test_participant_code)
+      state.test_policy_number = Number(payload.test_policy_number)
+      state.test_turn_number = Number(payload.test_turn_number)
+      // update masterStatements based on policy number
+      if (state.test_policy_number === 1) {
+        console.log('Test policy number 1')
+        state.masterStatements = [
+          'Should abortion be legal?'
+        ]
+      } else if (state.test_policy_number === 3) {
+        state.masterStatements = [
+          'Should abortion be legal?',
+          'Should governments have the authority to censor online content?',
+          'Should the government employ a stricter immigration/border policy?'
+        ]
+      }
+      // update conversation_exit_turn_number based on turn number
+      state.conversation_exit_turn_number = state.test_turn_number
+    },
+    assign_platform (state, payload) {
+      state.platform = payload.platform
+      if (state.platform === 'localhost') {
+        Vue.prototype.$server_url = 'http://127.0.0.1:8000/ccw/api/'
+        Vue.prototype.$ws_url = 'ws://127.0.0.1:8000/ws/chat/'
+        Vue.prototype.$chat_url = 'ws://127.0.0.1:8000/ws/chat/'
+        Vue.prototype.$test_mode = true
+      } else {
+        Vue.prototype.$server_url = 'https://gobackend.discussionexperiment.com/ccw/api/'
+        Vue.prototype.$ws_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
+        Vue.prototype.$chat_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
+        Vue.prototype.$test_mode = false
+      }
     }
   },
   actions: {
@@ -269,14 +309,9 @@ window.addEventListener('beforeunload', (event) => {
 new Vue({
   data: function () {
     return {
-      // localhost
-      // server_url: 'http://127.0.0.1:8000/ccw/api/',
-      // chat_url: 'ws://127.0.0.1:8000/ws/chat/',
-      // test_mode: true,
-      // AWS
-      server_url: 'https://gobackend.discussionexperiment.com/ccw/api/',
-      chat_url: 'wss://gobackend.discussionexperiment.com/ws/chat/',
-      test_mode: false,
+      server_url: Vue.prototype.$server_url,
+      chat_url: Vue.prototype.$chat_url,
+      test_mode: Vue.prototype.$test_mode,
       estimation: null,
       is_loading: false,
       fire_400: false,
@@ -419,7 +454,7 @@ new Vue({
       }
       let body = new FormData()
       body.append('subject_id', subjectId)
-      axios.post(this.$root.server_url + 'set_not_ready_to_pair', body)
+      axios.post(this.$server_url + 'set_not_ready_to_pair', body)
         .then(response => {
           console.log('Set not ready to pair response:', response.data)
         })
