@@ -263,10 +263,6 @@ export default {
 
       return colorHex
     },
-    initWebSocket () {
-      // Initialize WebSocket connection
-      this.$store.dispatch('initWebSocket')
-    },
     startCountdown () {
       const countdownInterval = setInterval(() => {
         this.countdown--
