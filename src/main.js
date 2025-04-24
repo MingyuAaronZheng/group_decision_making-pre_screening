@@ -232,6 +232,7 @@ const store = new Vuex.Store({
       }).catch(error => console.error('Error sending heartbeat:', error))
     },
     initWebSocket ({ commit, state }) {
+      console.log('Initializing WebSocket connection in action main', state.$ws_url)
       return new Promise((resolve, reject) => {
         const ws = new WebSocket(state.$ws_url)
 
@@ -293,6 +294,7 @@ new Vue({
   },
   methods: {
     initWebSocket () {
+      console.log('Initializing WebSocket connection in main method', this.$store.state.group_id)
       const wsUrl = `${this.$chat_url}${this.$store.state.group_id}/`
       console.log('Connecting to WebSocket at:', wsUrl)
 
@@ -308,6 +310,7 @@ new Vue({
     webSocketOnMessage (response) {
       let message = JSON.parse(response.data).message
       if (message.code === 101) {
+        console.log('WebSocket message:', message)
         if (message.startable) {
           this.alarm_sound.play()
           // show popup message based on the condition

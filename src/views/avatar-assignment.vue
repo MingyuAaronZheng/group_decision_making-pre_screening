@@ -272,7 +272,6 @@ export default {
         this.countdown--
         if (this.countdown <= 0) {
           clearInterval(countdownInterval)
-          this.initWebSocket()
           this.$router.push('/ChatRoom')
         }
       }, 1000)
