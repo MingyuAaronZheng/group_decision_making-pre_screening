@@ -34,7 +34,11 @@ export default {
       platform: null,
       worker_id: null,
       study_id: null,
-      session_id: null
+      session_id: null,
+      test_moderator_code: null,
+      test_participant_code: null,
+      test_policy_number: null,
+      test_turn_number: null
     }
   },
   mounted () { // get the worker id, study id, and session id from the URL
@@ -42,12 +46,19 @@ export default {
   },
   methods: {
     prolific_processor: function (url) {
-      // https://dev.d1uau7ss3lp78y.amplifyapp.com/qualificationentrance/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}
+      // https://dev.d1uau7ss3lp78y.amplifyapp.com/qualificationentrance/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}&TEST={{%TEST%}}&TEST_MODERATOR_CODE={{%TEST_MODERATOR%}}&TEST_PARTICIPANT_CODE={{%TEST_PARTICIPANT%}}&TEST_POLICY_NUMBER={{%TEST_POLICY%}}&TEST_TURN_NUMBER={{%TEST_TURN%}}
       this.platform = 'prolific'
       let prolificArray = url.split('?')[1].split('&')
       this.worker_id = prolificArray[0].split('=')[1]
       this.study_id = prolificArray[1].split('=')[1]
       this.session_id = prolificArray[2].split('=')[1]
+      this.test = prolificArray[3] ? prolificArray[3].split('=')[1] : 'N'
+      if (this.test === 'Y') {
+        this.test_moderator_code = prolificArray[4] ? prolificArray[4].split('=')[1] : 0
+        this.test_participant_code = prolificArray[5] ? prolificArray[5].split('=')[1] : 1
+        this.test_policy_number = prolificArray[6] ? prolificArray[6].split('=')[1] : 1
+        this.test_turn_number = prolificArray[7] ? prolificArray[7].split('=')[1] : 1
+      }
     },
     next: function () {
       let body = new FormData()
@@ -59,7 +70,13 @@ export default {
         body.append('worker_id', this.worker_id)
         body.append('study_id', this.study_id)
         body.append('session_id', this.session_id)
-
+        body.append('test', this.test)
+        if (this.test === 'Y') {
+          body.append('test_moderator_code', this.test_moderator_code)
+          body.append('test_participant_code', this.test_participant_code)
+          body.append('test_policy_number', this.test_policy_number)
+          body.append('test_turn_number', this.test_turn_number)
+        }
         axios.post(this.$root.server_url + 'create_subject', body)
           .then(response => {
             if (response.data.success === true) {
