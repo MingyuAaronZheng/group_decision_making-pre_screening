@@ -459,6 +459,13 @@ export default {
       .then(response => {
         console.log('Group member agreements response:', response.data)
         if (response.data && response.data.members) {
+          // Initialize root members list for message processing
+          this.$root.members = response.data.members.map(member => ({
+            subject_id: member.subject_id,
+            avatar_name: member.avatar_name,
+            avatar_color: member.avatar_color,
+            is_ready_to_end: false
+          }))
           this.memberAgreements = response.data.members
           // Build system messages for each member
           this.systemMessages = response.data.members.map(member => {
