@@ -96,7 +96,7 @@ const store = new Vuex.Store({
       websocket: null,
       websocketConnected: false,
       WebSocketOnMessageRunningTimes: 0,
-      current_turn: 0
+      current_turn: 1
     }
   },
   mutations: {
@@ -359,6 +359,8 @@ new Vue({
           .then(response => {
             if (response.data.success) {
               this.$store.state.current_turn = response.data.current_turn
+              console.log('frontend Current turn:', this.$store.state.current_turn)
+              console.log('backend Current turn:', response.data.current_turn)
             }
           })
           .catch(error => {
