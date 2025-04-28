@@ -3,49 +3,68 @@
     <template v-slot:header>
       <h2 class="survey-title">Policy Statement Survey</h2>
     </template>
-    <template v-slot:lead>
-      Please indicate your level of agreement with each policy statement below.
-    </template>
 
     <div class="content-area">
-      <div v-for="(statement, index) in pagedStatements" :key="statement.id" class="policy-statement">
-        <div class="statement-header">
-          <div class="statement-text highlight-statement">{{ statement.text }}</div>
-        </div>
-        <!-- Question 1: Extent of agreement -->
-        <b-form-radio-group
-          v-model="responses[(currentPage - 1) * pageSize + index].agreement"
-          :name="'agreement_' + ((currentPage - 1) * pageSize + index)"
-          buttons
-          button-variant="outline-black"
-          size="md"
-          class="agreement-options"
-          @change="onFormInteraction"
-        >
-          <div class="agreement-wrapper">
-            <div
-              v-for="(option, optIndex) in agreementScale"
-              :key="optIndex"
-              class="option-label-wrapper"
-            >
-              <div class="option-label">
-                {{ getAgreementLabel(option.value) }}
-              </div>
-              <b-form-radio :value="option.value" class="custom-radio-button">
-                <!-- Empty text since we're only showing labels -->
-              </b-form-radio>
-            </div>
+      <div v-for="(statement, index) in randomizedStatements" :key="statement.id" class="policy-statement-box mb-4">
+        <b-card class="w-100">
+          <div class="statement-header mb-2">
+            <div class="statement-text highlight-statement">{{ statement.text }}</div>
           </div>
-        </b-form-radio-group>
+          <!-- Question 1: Extent of agreement -->
+          <div class="question-block mb-3">
+            <p class="mb-1 font-weight-bold">To what extent do you agree with this statement?</p>
+            <b-form-radio-group
+              v-model="responses[index].agreement"
+              :name="'agreement_' + index"
+              buttons
+              button-variant="outline-black"
+              size="md"
+              class="agreement-options"
+              @change="onFormInteraction"
+            >
+              <div class="agreement-wrapper">
+                <div
+                  v-for="(option, optIndex) in agreementScale"
+                  :key="optIndex"
+                  class="option-label-wrapper"
+                >
+                  <div class="option-label">
+                    {{ getAgreementLabel(option.value) }}
+                  </div>
+                  <b-form-radio :value="option.value" class="custom-radio-button">
+                    <!-- Empty text since we're only showing labels -->
+                  </b-form-radio>
+                </div>
+              </div>
+            </b-form-radio-group>
+          </div>
+          <!-- Importance Question -->
+          <div class="question-block">
+            <p class="mb-1 font-weight-bold">How personally important is this issue to you?</p>
+            <b-form-radio-group
+              v-model="responses[index].importance"
+              :name="'importance_' + index"
+              buttons
+              button-variant="outline-black"
+              size="md"
+              class="agreement-options"
+              @change="onFormInteraction"
+            >
+              <div class="agreement-wrapper">
+                <div v-for="(option, optIndex) in importanceScale" :key="optIndex" class="option-label-wrapper">
+                  <div class="option-label">{{ option.text }}</div>
+                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
+                </div>
+              </div>
+            </b-form-radio-group>
+          </div>
+        </b-card>
       </div>
     </div>
 
     <!-- Final submit button -->
     <div class="button-area">
-      <b-button v-if="currentPage === 1" variant="primary" size="lg" @click="goToNextPage" :disabled="!isCurrentPageComplete">
-        Next Page
-      </b-button>
-      <b-button v-else variant="primary" size="lg" @click="finalSubmit" :disabled="!isCurrentPageComplete">
+      <b-button variant="primary" size="lg" @click="finalSubmit">
         <font-awesome-icon :icon="['fas', 'circle-check']" class="mr-2" />
         Submit and complete
       </b-button>
@@ -59,7 +78,8 @@ import axios from 'axios'
 export default {
   data () {
     const initialResponses = this.$store.state.masterStatements.map(() => ({
-      agreement: null
+      agreement: null,
+      importance: null
     }))
     return {
       // selected statements = master statements mapped to objects with id and text
@@ -92,38 +112,25 @@ export default {
         {text: 'Extremely important to me', value: 7}
       ],
       // Will hold randomized statements
-      randomizedStatements: [],
-      // Paging controls
-      pageSize: 6,
-      currentPage: 1
+      randomizedStatements: []
     }
   },
   mounted () {
     // Initialize responses array with empty objects for each statement
     this.responses = this.selectedStatements.map(() => ({
-      agreement: null
+      agreement: null,
+      importance: null
     }))
     this.$store.commit('startInactivityCheck')
     window.addEventListener('show-inactivity-warning', this.showInactivityWarning)
     window.addEventListener('remove-inactive-user', this.handleInactiveUser)
-  },
-  computed: {
-    pagedStatements () {
-      const start = (this.currentPage - 1) * this.pageSize
-      return (this.randomizedStatements || []).slice(start, start + this.pageSize)
-    },
-    isCurrentPageComplete () {
-      const start = (this.currentPage - 1) * this.pageSize
-      const end = start + this.pageSize
-      return this.responses.slice(start, end).every(r => r.agreement !== null)
-    }
   },
   watch: {
     selectedStatements: {
       handler (newVal) {
         if (newVal && newVal.length > 0) {
           this.randomizedStatements = this.shuffleArray(newVal)
-          this.responses = newVal.map(() => ({ agreement: null }))
+          this.responses = newVal.map(() => ({ agreement: null, importance: null }))
         }
       },
       immediate: true,
@@ -154,23 +161,16 @@ export default {
 
     // Final submit logic
     finalSubmit () {
-      // Only allow submit on page 2
-      if (this.currentPage !== 2) return
-      const incomplete = this.responses.some(
-        (response) => response.agreement === null
-      )
+      const incomplete = this.responses.some(r => r.agreement === null || r.importance === null)
       if (incomplete) {
-        this.$bvToast.toast('Please answer all questions before submitting.', {
-          title: 'Incomplete Survey',
-          variant: 'warning',
-          solid: true
-        })
+        this.$alert('Please answer all questions before submitting.')
         return
       }
-      // Prepare mapped responses: [{id, agreement}]
+      // Prepare mapped responses: [{id, agreement, importance}]
       const mappedResponses = this.randomizedStatements.map((s, i) => ({
         statement_id: s.id,
-        agreement: this.responses[i].agreement
+        agreement: this.responses[i].agreement,
+        importance: this.responses[i].importance
       }))
       const body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
@@ -191,13 +191,6 @@ export default {
         .catch(() => {
           alert('An error occurred while submitting. Please try again.')
         })
-    },
-    goToNextPage () {
-      if (this.currentPage === 1 && this.isCurrentPageComplete) {
-        this.currentPage = 2
-        // Optionally scroll to top
-        window.scrollTo({top: 0, behavior: 'smooth'})
-      }
     },
 
     // Track activity on form interactions
@@ -255,7 +248,7 @@ export default {
   font-size: 0.8rem;
   color: #495057;
   margin-bottom: 4px;
-  height: 2.5em; /* 🔥 this keeps all labels same height */
+  height: 2.5em; /* keeps all labels same height */
   display: flex;
   align-items: center;
   justify-content: center;

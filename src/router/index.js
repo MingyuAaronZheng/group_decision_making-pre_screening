@@ -8,7 +8,7 @@ import StarEntrance from '../views/StarEntrance.vue'
 import DiscussionInstructions from '../views/DiscussionInstructions.vue'
 import WaitingRoom from '../views/WaitingRoom.vue'
 /** Common pages - Exit pages**/
-
+import EarlyExit from '../views/errors/EarlyExit.vue'
 /** Errors **/
 import FailPairing from '../views/errors/FailPairing.vue'
 import FailAttention from '../views/errors/FailAttention.vue'
@@ -44,6 +44,11 @@ const routes = [
   {
     path: '/',
     redirect: '/StarEntrance'
+  },
+  {
+    path: '/EarlyExit',
+    name: 'EarlyExit',
+    component: EarlyExit
   },
   {
     path: '/StarEntrance',
@@ -134,7 +139,7 @@ router.beforeEach((to, from, next) => {
   let toIndex
 
   // Define EndingPages as an array of pages that are not part of the study flow
-  const EndingPages = ['KickOut', 'FailPairing', 'FailAttention', 'NoEntrance', 'GoBackTerminatedParticipation', 'InactivityTerminatedParticipation', 'DeBriefing']
+  const EndingPages = ['KickOut', 'FailPairing', 'FailAttention', 'NoEntrance', 'GoBackTerminatedParticipation', 'InactivityTerminatedParticipation', 'DeBriefing', 'EarlyExit']
   // If the page is an ending page, set the index to 1000
   if (EndingPages.includes(from.name)) {
     fromIndex = 1000

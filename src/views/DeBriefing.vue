@@ -4,18 +4,37 @@
     <p>Thank you for participating in the earlier group discussion. We understand that some topics may feel sensitive or polarizing.</p>
     <p>If you ever need support, please explore these mental health resources:</p>
     <ul>
-      <li><strong>SAMHSA</strong> – Visit <a href="https://www.samhsa.gov/" target="_blank" rel="noopener">samhsa.gov</a> for information and support.</li>
-      <li><strong>Crisis Text Line</strong> – Text <strong>HOME</strong> to <strong>741741</strong> to connect with a trained counselor.</li>
       <li><strong>CDC Mental Health Resources</strong> – Access <a href="https://www.cdc.gov/mental-health/caring/index.html#:~:text=Treatment%20and%20support&text=Visit%20findtreatment.gov%20%E2%80%93%20a%20confidential,Code%20to%20435748%20(HELP4U)" target="_blank" rel="noopener">cdc.gov/mental-health</a> for more information.</li>
       <li><strong>Local Services</strong> – Contact your primary care physician or local health department for referrals in your area.</li>
     </ul>
     <p>Your well-being matters to us. Don’t hesitate to reach out if you need assistance.</p>
+    <div class="button-area">
+      <h5>Please push the button below to submit the study!</h5>
+      <b-button variant="primary" name="next" v-on:click="submit">Submit Study</b-button>
+    </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
 export default {
-  name: 'DeBriefing'
+  name: 'DeBriefing',
+  methods: {
+    submit (event) {
+      const body = new FormData()
+      body.append('subject_id', this.$store.state.subject_id)
+      body.append('status', 'success')
+      axios.post(this.$server_url + 'submit_to_prolific', body)
+        .then(response => {
+          if (response.data.success === true) {
+            window.location.href = response.data.prolific_url
+          } else {
+            alert('Some error happened! Please submit the HIT on Prolific manually.')
+          }
+        })
+        .catch(e => { alert('Some error happened! Please submit the HIT on Prolific manually.' + e) })
+    }
+  }
 }
 </script>
 

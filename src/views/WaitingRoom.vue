@@ -7,7 +7,7 @@
     <div class="content-area">
       <p>
         We are pairing you with other participants to start the discussion task.
-        <span class="highlight">Please turn on audio on your device.</span>
+        <strong style="color: blue;">Please turn on audio on your device.</strong>
         Once all of the group members arrive, we will notify you with a sound and redirect you to the next page.
       </p>
       <p>

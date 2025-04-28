@@ -19,7 +19,7 @@
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Take Turns to Speak:</strong> If you see "<i>[Participant Name, e.g., pink tiger] is typing</i>" on the interface, wait until the indicator disappears before responding.</b-list-group-item>
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Duration:</strong> After taking four discussion turns, you may continue or proceed to the exit survey.</b-list-group-item>
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Exit Options:</strong> You may leave anytime without penalty.</b-list-group-item>
-        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>No Copy-Pasting:</strong> Copy-pasting is disabled to ensure original opinions.</b-list-group-item>
+        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong style="color: blue;">No Copy-Pasting:</strong> <span style="color: blue;">Copy-pasting is disabled to ensure original opinions.</span></b-list-group-item>
       </b-list-group>
     </div>
 

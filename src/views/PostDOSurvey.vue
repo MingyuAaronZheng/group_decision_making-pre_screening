@@ -10,10 +10,11 @@
       <div class="content-area">
       <!-- Policy Attitudes Section -->
       <div class="section">
-        <h4>Policy Attitudes and Personal Importance</h4>
-        <p class="text-muted">Please review your positions on the discussion topics.</p>
-        <div v-for="(statement, index) in statements" :key="index" class="policy-statement mb-4">
-          <p><strong>Statement {{ index + 1 }}:</strong> {{ statement}}</p>
+        <h4>Please indicate your current stance on the following discussion topics.</h4>
+        <p></p>
+        <p></p>
+        <div v-for="(statement, index) in randomizedStatements" :key="index" class="policy-statement mb-4">
+          <p><strong>Statement {{ index + 1 }}:</strong> {{ statement.text }}</p>
 
           <!-- Agreement Question -->
           <div class="question-block">
@@ -61,31 +62,14 @@
 
       <!-- Conversation Quality Section -->
       <div class="section">
-        <h4>Conversation Quality</h4>
-        <p>How would you grade the quality of the discussion you just had?</p>
-        <b-form-radio-group
-          v-model="conversationQuality"
-          :name="'conversationQuality'"
-          buttons
-          button-variant="outline-black"
-          size="md"
-          class="agreement-options custom-radio-button"
-          @change="onFormInteraction"
-        >
-          <div class="agreement-wrapper">
-            <div v-for="(option, optIndex) in qualityScale" :key="optIndex" class="option-label-wrapper">
-              <div class="option-label">{{ option.text }}</div>
-              <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
-            </div>
-          </div>
-        </b-form-radio-group>
-
-        <p class="mt-3">To what extent do you agree with the following statements regarding the discussion?</p>
-        <div v-for="(statement, index) in conversationStatements" :key="index" class="mb-3">
-          <p>{{ statement }}</p>
+        <h4>Based on your experience in the previous group discussion, please answer the following questions.</h4>
+        <p></p>
+        <p></p>
+        <div class="question-block">
+          <p>How would you grade the quality of the discussion you just had?</p>
           <b-form-radio-group
-            v-model="conversationResponses[index]"
-            :name="'conversation_' + index"
+            v-model="conversationQuality"
+            :name="'conversationQuality'"
             buttons
             button-variant="outline-black"
             size="md"
@@ -93,38 +77,69 @@
             @change="onFormInteraction"
           >
             <div class="agreement-wrapper">
-              <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
-                <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
+              <div v-for="(option, optIndex) in qualityScale" :key="optIndex" class="option-label-wrapper">
+                <div class="option-label">{{ option.text }}</div>
                 <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
               </div>
             </div>
           </b-form-radio-group>
         </div>
+        <p class="mt-3">To what extent do you agree with the following statements regarding the discussion?</p>
+        <table class="table agreement-table">
+          <thead>
+            <tr>
+              <th>Statement</th>
+              <th v-for="option in agreementScale" :key="option.value" class="text-center align-middle">{{ option.text || getAgreementLabel(option.value) }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(statement, index) in conversationStatements" :key="index">
+              <td>{{ statement }}</td>
+              <td v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+                <b-form-radio
+                  v-model="conversationResponses[index]"
+                  :name="'conversation_' + index"
+                  :value="option.value"
+                  class="custom-radio-button"
+                  @change="onFormInteraction"
+                >
+                  <span class="square-dot"></span>
+                </b-form-radio>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Democratic Reciprocity Section -->
       <div class="section">
-        <h4>Democratic Reciprocity</h4>
-        <p>To what extent do you agree with the following statements?</p>
-        <div v-for="(statement, index) in reciprocityStatements" :key="index" class="mb-3">
-          <p>{{ statement }}</p>
-          <b-form-radio-group
-            v-model="reciprocityResponses[index]"
-            :name="'reciprocity_' + index"
-            buttons
-            button-variant="outline-black"
-            size="md"
-            class="agreement-options custom-radio-button"
-            @change="onFormInteraction"
-          >
-            <div class="agreement-wrapper">
-              <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
-                <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
-                <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
-              </div>
-            </div>
-          </b-form-radio-group>
-        </div>
+        <h4>To what extent do you agree with the following statements?</h4>
+        <table class="table agreement-table">
+          <thead>
+            <tr>
+              <th>Statement</th>
+              <th v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+                {{ option.text || getAgreementLabel(option.value) }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(statement, index) in reciprocityStatements" :key="index">
+              <td>{{ statement }}</td>
+              <td v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+                <b-form-radio
+                  v-model="reciprocityResponses[index]"
+                  :name="'reciprocity_' + index"
+                  :value="option.value"
+                  class="custom-radio-button"
+                  @change="onFormInteraction"
+                >
+                  <span class="square-dot"></span>
+                </b-form-radio>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Submit Button -->
@@ -133,7 +148,6 @@
           variant="primary"
           size="lg"
           @click="submitSurvey"
-          :disabled="!isFormValid"
         >
           Submit Survey
         </b-button>
@@ -150,6 +164,7 @@ export default {
   data () {
     return {
       statements: [], // Will be populated from store
+      randomizedStatements: [],
       policyResponses: [],
       conversationQuality: null,
       conversationResponses: Array(4).fill(null),
@@ -210,15 +225,23 @@ export default {
     }
   },
   created () {
-    // Get statements from store
-    this.statements = this.$store.state.masterStatements
-    // Initialize policy responses
-    this.policyResponses = this.statements.map(() => ({
+    // Wrap statements with IDs and shuffle
+    const selectedStatements = this.$store.state.masterStatements.map((text, idx) => ({ id: idx, text }))
+    this.randomizedStatements = this.shuffleArray(selectedStatements)
+    this.policyResponses = this.randomizedStatements.map(() => ({
       agreement: null,
       importance: null
     }))
   },
   methods: {
+    shuffleArray (array) {
+      const arr = array.slice()
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[arr[i], arr[j]] = [arr[j], arr[i]]
+      }
+      return arr
+    },
     // Track activity on form interactions
     onFormInteraction () {
       this.$store.dispatch('recordActivity')
@@ -239,16 +262,20 @@ export default {
       // Record activity when submitting
       this.$store.dispatch('recordActivity')
       if (!this.isFormValid) {
-        this.$bvToast.toast('Please complete all questions before submitting.', {
-          title: 'Form Incomplete',
-          variant: 'warning'
-        })
+        alert('Please complete all questions before submitting.')
         return
       }
 
+      // Map responses to include statement IDs
+      const mappedResponses = this.randomizedStatements.map((s, i) => ({
+        statement_id: s.id,
+        agreement: this.policyResponses[i].agreement,
+        importance: this.policyResponses[i].importance
+      }))
+
       const formData = new FormData()
       formData.append('subject_id', this.$store.state.subject_id)
-      formData.append('policy_responses', JSON.stringify(this.policyResponses))
+      formData.append('policy_responses', JSON.stringify(mappedResponses))
       formData.append('conversation_quality', this.conversationQuality)
       formData.append('conversation_responses', JSON.stringify(this.conversationResponses))
       formData.append('reciprocity_responses', JSON.stringify(this.reciprocityResponses))
@@ -256,7 +283,7 @@ export default {
         .post(this.$server_url + 'post_do_survey', formData)
         .then((response) => {
           if (response.data.success) {
-            this.$store.commit('setPostDiscussionResponses', this.policyResponses)
+            this.$store.commit('setPostDiscussionResponses', mappedResponses)
             this.$router.push('/PostDFSurvey')
           } else {
             alert(response.data.message)
@@ -399,5 +426,21 @@ export default {
   justify-content: center;
   width: 100%;
   margin-top: 0.5rem;
+}
+
+.agreement-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+.agreement-table th, .agreement-table td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.agreement-table th {
+  background-color: #f8f9fa;
 }
 </style>

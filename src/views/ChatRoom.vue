@@ -235,6 +235,9 @@ export default {
     }
   },
   methods: {
+    bumpActivityOnClick () {
+      this.$store.commit('updateLastActivity')
+    },
     avatarColorHex (avatar_color) {
       return colors[avatar_color] || avatar_color || '#000000'
     },
@@ -318,8 +321,9 @@ export default {
       return filtered.length
     },
     sendMessage () {
-      // TODO TEST remove
-      // this.$store.dispatch('recordActivity')
+      this.$store.dispatch('recordActivity')
+      // Also bump activity on send
+      this.$store.commit('updateLastActivity')
       const trimmedMessage = this.send_out_message.trim()
       // console.log('Trimmed message:', trimmedMessage)
 
@@ -426,6 +430,8 @@ export default {
       deep: true
     },
     send_out_message (newMessage) {
+      // Bump activity on typing
+      this.$store.commit('updateLastActivity')
       // Clear any existing timeout
       if (this.typingTimeout) {
         clearTimeout(this.typingTimeout)
@@ -449,6 +455,13 @@ export default {
     if (!this.$root.websock || this.$root.websock.readyState !== WebSocket.OPEN) {
       this.$root.initWebSocket()
     }
+
+    // Listen for inactivity events
+    window.addEventListener('show-inactivity-warning', this.showInactivityWarning)
+    window.addEventListener('remove-inactive-user', this.handleInactiveUser)
+
+    // Bump activity on any click in the chat room
+    this.$el.addEventListener('click', this.bumpActivityOnClick)
 
     // Fetch group member agreements and generate system messages
     const groupId = this.$store.state.group_id
@@ -500,6 +513,7 @@ export default {
 
     // Existing mounted code...
     this.updateChatStatus()
+    this.$store.commit('startInactivityCheck')
   },
   beforeDestroy () {
     // Clean up event listeners
@@ -507,7 +521,9 @@ export default {
     window.removeEventListener('remove-inactive-user', this.handleInactiveUser)
     window.removeEventListener('user-typing', (event) => this.handleTyping(event.detail))
     window.removeEventListener('user-stopped-typing', () => { this.typingNotification = null })
-
+    if (this.$el) {
+      this.$el.removeEventListener('click', this.bumpActivityOnClick)
+    }
     // Clear any existing timeouts
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout)

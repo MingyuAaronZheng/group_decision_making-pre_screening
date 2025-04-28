@@ -14,6 +14,9 @@
           If you believe this is an error, please contact the study administrators with your
           participant ID: {{ $store.state.subject_id }}
         </p>
+        <p>Please provide a reason for termination (optional):</p>
+        <b-form-checkbox-group v-model="reasons" :options="reasonOptions" />
+        <b-form-input v-model="otherReason" placeholder="Other reason" />
         <p>Please push the button below to redirect to prolific.</p>
         <b-button
           variant="primary"
@@ -31,21 +34,34 @@ import axios from 'axios'
 
 export default {
   name: 'GoBackTerminatedParticipation',
+  data () {
+    return {
+      reasons: [],
+      otherReason: '',
+      reasonOptions: [
+        { text: 'Technical issues', value: 'technical_issues' },
+        { text: 'Difficulty understanding the task', value: 'difficulty_understanding' },
+        { text: 'Other', value: 'other' }
+      ]
+    }
+  },
   methods: {
     submit: function (event) {
       let body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
       body.append('status', 'go_back_terminate')
+      body.append('reasons', JSON.stringify(this.reasons))
+      body.append('other_reason', this.otherReason)
       axios.post(this.$server_url + 'submit_to_prolific', body)
         .then(response => {
           if (response.data.success === true) {
             window.location.href = response.data.prolific_url
           } else {
-            alert('Some error happened!! Please leave comments and submit the HIT on Prolific.')
+            alert('Some error happened!! Please leave comments and submit the study on Prolific.')
           }
         })
         .catch(e => {
-          alert('Some error happened!! Please leave comments and submit the HIT on Prolific.' + e)
+          alert('Some error happened!! Please leave comments and submit the study on Prolific.' + e)
         })
     }
   },

@@ -24,6 +24,7 @@ import { faCircleCheck, faCircleXmark, faCircle, faSkull, faGavel, faRobot } fro
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import VueTour from 'vue-tour'
 import axios from 'axios'
+import ReadyEndToast from './components/ReadyEndToast.vue'
 
 require('vue-tour/dist/vue-tour.css')
 Amplify.configure(aws_exports)
@@ -33,7 +34,8 @@ Vue.use(VueSimpleAlert)
 Vue.use(Toast, {
   transition: 'Vue-Toastification__bounce',
   maxToasts: 20,
-  newestOnTop: true
+  newestOnTop: true,
+  dangerouslyUseHTMLString: true
 })
 Vue.use(VueTour)
 Vue.component('v-animal', animal)
@@ -425,6 +427,26 @@ new Vue({
         })
         // Store `all_ready` in Vuex so all components can reactively watch it
         this.$store.commit('setAllReadyStatus', message.all_ready)
+        // Show yellow warning toast when a subject is ready (skip if all are ready)
+        const subject_obj = message.message.sender
+        const subject_id = subject_obj.subject_id
+        const subject_name = subject_obj.avatar_name
+        const subject_color = subject_obj.avatar_color
+        // Only show the warning if the sender is not the current user
+        if (!message.all_ready && subject_id !== this.$store.state.subject_id) {
+          this.$toast(
+            { component: ReadyEndToast, props: { subjectColor: subject_color, subjectName: subject_name } },
+            {
+              type: 'warning',
+              position: 'top-left',
+              timeout: false, // persistent
+              closeOnClick: false, // only close with close button
+              closeButton: 'button', // Ensure close button is always visible
+              hideProgressBar: true,
+              toastId: 'ready-to-end-warning'
+            }
+          )
+        }
       }
     },
     webSocketOnOpen (e) {

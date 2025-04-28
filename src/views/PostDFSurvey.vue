@@ -52,8 +52,9 @@
 
         <!-- Critical Thinking -->
         <div class="section">
-          <h4>Critical Thinking Level</h4>
-          <p>To what extent do you agree with the following statements regarding your experience?</p>
+          <div class="text-center">
+            <h4>To what extent do you agree with the following statements regarding your experience?</h4>
+          </div>
           <div v-for="(statement, index) in criticalThinkingStatements" :key="index" class="mb-3">
             <p>{{ statement }}</p>
             <b-form-radio-group v-model="criticalThinkingResponses[index]" :name="'critical_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
@@ -69,7 +70,7 @@
 
         <!-- Attention Check 2 -->
         <div class="section">
-          <p><strong>Attention Check:</strong> Please select 'Strongly Agree' for this statement.</p>
+          <p><strong>Attention Check:</strong> Please select 'Agree' for this statement.</p>
           <p>Statement: I have read the instructions carefully.</p>
           <b-form-radio-group v-model="attentionCheck2" :name="'attentionCheck2'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
             <div class="agreement-wrapper">
@@ -98,7 +99,9 @@
         <!-- AI Interaction Quality (Conditional) -->
         <div v-if="hasAIParticipant || hasAIModerator" class="section">
           <div v-if="hasAIParticipant">
-            <h4>Conversation Quality With the AI Participant</h4>
+            <div class="text-center">
+              <h4>Conversation Quality With the AI Participant</h4>
+            </div>
             <div v-for="(statement, index) in aiParticipantStatements" :key="index" class="mb-3">
               <p>{{ statement }}</p>
               <b-form-radio-group v-model="aiParticipantResponses[index]" :name="'aiParticipant_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
@@ -113,7 +116,9 @@
           </div>
 
           <div v-if="hasAIModerator">
-            <h4>Conversation Quality With the AI Moderator</h4>
+            <div class="text-center">
+              <h4>Conversation Quality With the AI Moderator</h4>
+            </div>
             <div v-for="(statement, index) in aiModeratorStatements" :key="index" class="mb-3">
               <p>{{ statement }}</p>
               <b-form-radio-group v-model="aiModeratorResponses[index]" :name="'aiModerator_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
@@ -130,10 +135,9 @@
 
         <!-- Cost of Communication -->
         <div class="section">
-          <h4>Cost of Communication Technologies</h4>
-          <p>{{ generateCostPrompt() }}</p>
+          <h4>{{ generateCostPrompt() }}</h4>
           <div v-for="(statement, index) in costStatements" :key="index" class="mb-3">
-            <p>{{ statement }}</p>
+            <p v-html="statement"></p>
             <b-form-radio-group v-model="costResponses[index]" :name="'cost_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
               <div class="agreement-wrapper">
                 <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
@@ -151,7 +155,6 @@
             variant="primary"
             size="lg"
             @click="submitSurvey"
-            :disabled="!isFormValid"
           >
             Submit Survey
           </b-button>
@@ -219,10 +222,10 @@ export default {
         'I trust the AI moderator.'
       ],
       costStatements: [
-        'I feel MORE guilty if I don\'t respond to a message from others when interacting on the new platform.',
-        'I feel SADDER when others don\'t pay enough attention to me when interacting on the new platform.',
-        'I am MORE concerned about my privacy when using the new platform.',
-        'I worry MORE about lacking companionship when using the new platform.'
+        'I feel <strong>MORE</strong> guilty if I don\'t respond to a message from others when interacting on the new platform.',
+        'I feel <strong>SADDER</strong> when others don\'t pay enough attention to me when interacting on the new platform.',
+        'I am <strong>MORE</strong> concerned about my privacy when using the new platform.',
+        'I worry <strong>MORE</strong> about lacking companionship when using the new platform.'
       ]
     }
   },
@@ -290,10 +293,11 @@ export default {
     generateChangeSummary () {
       // Generate summary of which statements changed/stayed same
       const changes = []
-      this.preDiscussionResponses.forEach((pre, index) => {
-        const post = this.postDiscussionResponses[index]
-        if (pre.agreement !== post.agreement) {
-          changes.push(this.selectedStatements[index])
+      const masters = this.$store.state.masterStatements
+      this.preDiscussionResponses.forEach(pre => {
+        const post = this.postDiscussionResponses.find(p => p.statement_id === pre.statement_id)
+        if (post && pre.agreement !== post.agreement) {
+          changes.push(masters[pre.statement_id])
         }
       })
       // If more than 3 changes, randomly select 3 and add "and extra" note
@@ -320,10 +324,7 @@ export default {
     },
     async submitSurvey () {
       if (!this.isFormValid) {
-        this.$bvToast.toast('Please complete all required fields.', {
-          title: 'Form Incomplete',
-          variant: 'warning'
-        })
+        this.$alert('Please complete all required fields.')
         return
       }
 
@@ -347,7 +348,7 @@ export default {
         console.log('Attention check 2:', this.attentionCheck2)
         let FailAttention = false
 
-        if (this.attentionCheck1 !== 82 || this.attentionCheck2 !== 7) {
+        if (this.attentionCheck1 !== 82 || this.attentionCheck2 !== 6) {
           FailAttention = true
         }
         if (FailAttention) {
