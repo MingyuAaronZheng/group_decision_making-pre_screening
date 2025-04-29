@@ -40,7 +40,7 @@
 
         <!-- Attention Check 1 -->
         <div class="section">
-          <p>What day of the week is today?</p>
+          <p>What day of the week is tomorrow?</p>
           <b-form-radio-group v-model="attentionCheck1" :name="'attentionCheck1'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
             <div class="agreement-wrapper">
               <div v-for="(option, optIndex) in attentionCheck1Options" :key="optIndex" class="option-label-wrapper">
