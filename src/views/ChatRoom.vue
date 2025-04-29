@@ -1,14 +1,17 @@
 <template>
   <div class="chat-room">
+    <div class="page-indicator text-center mb-1">Page: 7 / 10</div>
     <!-- Chat Statement, User's Stance, and User's Name -->
     <div class="statement-area">
       <p class="chat-statement">
         <strong>Discussion Topic:</strong> {{ chat_statement }}
       </p>
       <p class="user-stance">
-        <strong>Your Stance:</strong> {{ user_stance }}
+        <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
+        <strong>{{ avatar_full_name }}'s (Your) Stance:</strong> {{ user_stance }}
       </p>
       <p class="current-turn">
+        <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
         <strong>Your Name:</strong> {{ avatar_full_name }}
       </p>
     </div>
@@ -79,7 +82,7 @@
           <b-col cols="2"/>
           <b-col cols="9" style="padding-right: 15px;">
             <b-row style="margin-right: 0;" class="justify-content-end">
-              <b-col class="current-user-avatar-name text-end" style="text-align: right; width: 100%;">You</b-col>
+              <b-col class="current-user-avatar-name text-end" style="text-align: right; width: 100%;">{{ avatar_part_name }} (You)</b-col>
             </b-row>
             <b-row style="margin-left: 0;">
               <b-col>
@@ -100,20 +103,6 @@
       </div>
     </div>
 
-    <!-- Ready to End Button and Status -->
-    <div v-if="canExit" class="ready-to-end-area" style="padding: 0; margin: 0;">
-      <div class="button-container" style="text-align: right;">
-        <b-button
-          @click="handleReadyToEnd"
-          :variant="isReadyToEnd ? 'success' : 'primary'"
-          class="exit-button"
-          :disabled="isReadyToEnd"
-        >
-          {{ isReadyToEnd ? 'You indicated you are ready to end the discussion. We are waiting for other participants to do the same.' : 'When you are ready to end the discussion, click this button' }}
-        </b-button>
-      </div>
-    </div>
-
     <!-- Typing Notifications -->
     <div v-if="typingNotification" class="typing-notifications">
       <p class="typing-indicator">
@@ -129,18 +118,21 @@
     <!-- Chat Input Area -->
     <div class="message-area">
       <b-input-group>
-        <b-form-input
+        <b-form-textarea
           placeholder="Type a message..."
           v-model="send_out_message"
           class="message-input-area"
-          @keydown.enter.native="sendMessage"
+          rows="1"
+          max-rows="5"
+          resize="none"
+          @keydown.enter.native.exact.prevent="sendMessage"
           @paste.prevent
           @copy.prevent
           @cut.prevent
           :disabled="isAITyping"
         />
         <b-button
-          variant='primary'
+          variant='success'
           class="message-send-button"
           v-on:click="sendMessage"
           :disabled="isAITyping"
@@ -150,13 +142,27 @@
       </b-input-group>
     </div>
 
+    <!-- Ready to End Button and Status -->
+    <div v-if="canExit" class="ready-to-end-area d-flex justify-content-center my-4" style="padding: 0;">
+      <div class="button-container d-flex justify-content-center">
+        <b-button
+          @click="handleReadyToEnd"
+          :variant="isReadyToEnd ? 'success' : 'warning'"
+          class="exit-button"
+          :disabled="isReadyToEnd"
+        >
+          {{ isReadyToEnd ? 'You indicated you are ready to end the discussion. We are waiting for other participants to do the same.' : 'When you are ready to end the discussion, click this button' }}
+        </b-button>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import { colors } from '@/components/constants'
 import axios from 'axios'
-import { english as lightStops } from 'stopwords'
+import { notifyInactivity } from '@/plugins/notificationService.js'
 
 const CUSTOM_FILLER_WORDS = new Set([
   'um', 'uh', 'er', 'ah', 'like', 'okay', 'right', 'you know', 'i mean',
@@ -178,6 +184,9 @@ export default {
   computed: {
     avatar_full_name () {
       return this.$store.state.avatar_color + ' ' + this.$store.state.avatar_name
+    },
+    avatar_part_name () {
+      return this.$store.state.avatar_name
     },
     chat_statement () {
       return this.$store.state.chat_statement || 'No discussion topic available'
@@ -311,14 +320,11 @@ export default {
     },
     countMeaningfulWords (message) {
       const words = message.toLowerCase().trim().split(/\s+/)
-
-      // Remove common English stop words (light list)
-      let filtered = words.filter(word => !lightStops.includes(word))
-
       // Remove custom filler words
-      filtered = filtered.filter(word => !CUSTOM_FILLER_WORDS.has(word))
-
-      return filtered.length
+      const filtered = words.filter(word => !CUSTOM_FILLER_WORDS.has(word))
+      // Count only unique words
+      const uniqueWords = new Set(filtered)
+      return uniqueWords.size
     },
     sendMessage () {
       this.$store.dispatch('recordActivity')
@@ -330,11 +336,12 @@ export default {
       if (trimmedMessage !== '') {
         const meaningfulWordCount = this.countMeaningfulWords(trimmedMessage)
         // console.log('Meaningful word count:', meaningfulWordCount)
-
-        if (meaningfulWordCount < 10) {
+        // Set required meaningful word count based on test state
+        const requiredMeaningfulWords = this.$store.state.test === 'Y' ? 3 : 10
+        if (meaningfulWordCount < requiredMeaningfulWords) {
           // Show error message
           this.$bvToast.toast(
-            `Your message must contain at least 10 meaningful words. Filler words don't count. (Currently: ${meaningfulWordCount})`,
+            `Your message must contain at least ${requiredMeaningfulWords} meaningful words. Filler words don't count. (Currently: ${meaningfulWordCount})`,
             {
               title: 'Message Too Short',
               variant: 'warning',
@@ -382,12 +389,7 @@ export default {
       this.$root.sendWebSocketMessage(ready_message)
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please respond within 30 seconds or you may be removed from the discussion.', {
-        title: 'Inactivity Warning',
-        variant: 'warning',
-        solid: true,
-        autoHideDelay: 10000
-      })
+      notifyInactivity(this.$bvToast, this.$store.state.test)
     },
     handleInactiveUser () {
       // Send websocket message to notify server
@@ -516,6 +518,10 @@ export default {
     this.$store.commit('startInactivityCheck')
   },
   beforeDestroy () {
+    // Dismiss ready-to-end-warning toast if present
+    if (this.$toast && typeof this.$toast.dismiss === 'function') {
+      this.$toast.dismiss('ready-to-end-warning')
+    }
     // Clean up event listeners
     window.removeEventListener('show-inactivity-warning', this.showInactivityWarning)
     window.removeEventListener('remove-inactive-user', this.handleInactiveUser)
@@ -563,6 +569,10 @@ export default {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   margin-bottom: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 600px;
+  width: 100%;
 }
 
 .chat-statement, .user-stance {
@@ -662,8 +672,10 @@ export default {
 }
 
 .message-send-button {
-  border-radius: 8px;
-  padding: 12px 24px;
+    border-radius: 8px;
+    padding: 12px 24px;
+    background-color: #0342a1 !important;
+    border-color: #0342a1 !important;
 }
 
 .exit-button {

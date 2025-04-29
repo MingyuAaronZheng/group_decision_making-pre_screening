@@ -24,7 +24,7 @@ import { faCircleCheck, faCircleXmark, faCircle, faSkull, faGavel, faRobot } fro
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import VueTour from 'vue-tour'
 import axios from 'axios'
-import ReadyEndToast from './components/ReadyEndToast.vue'
+import { notifyReadyToEnd } from '@/plugins/notificationService.js'
 
 require('vue-tour/dist/vue-tour.css')
 Amplify.configure(aws_exports)
@@ -76,12 +76,12 @@ const store = new Vuex.Store({
       participant_condition: -1,
       moderator_condition: -1,
       masterStatements: [
-        'Should abortion be legal?',
-        'Should governments have the authority to censor online content?',
-        'Should the government employ a stricter immigration/border policy?',
-        'Do tariffs on imported goods protect American jobs and industries from foreign competition?',
-        'Should the government cut tax for the wealthy?',
-        'Is unpredictability in U.S. foreign policy an effective deterrent against hostile actions from other nations?'
+        'Abortion should be legal.',
+        'Governments should have the authority to censor online content.',
+        'The government should employ a stricter immigration/border policy.',
+        'Tariffs on imported goods protect American jobs and industries from foreign competition.',
+        'The government should cut taxes for the wealthy.',
+        'Unpredictability in U.S. foreign policy is an effective deterrent against hostile actions from other nations.'
       ], // Store master statements
       heartbeatInterval: null,
       chat_statement_index: null,
@@ -193,7 +193,7 @@ const store = new Vuex.Store({
           }
 
           // Remove user after 1.25 minute of inactivity
-          if (timeSinceLastActivity >= 75000) {
+          if (timeSinceLastActivity >= 75000 && state.test !== 'Y') {
             // Clear the interval before removing user to prevent multiple triggers
             clearInterval(state.inactivityCheckInterval)
             state.inactivityCheckInterval = null
@@ -227,13 +227,17 @@ const store = new Vuex.Store({
       if (state.test_policy_number === 1) {
         console.log('Test policy number 1')
         state.masterStatements = [
-          'Should abortion be legal?'
+          'Abortion should be legal.'
         ]
       } else if (state.test_policy_number === 3) {
         state.masterStatements = [
-          'Should abortion be legal?',
-          'Should governments have the authority to censor online content?',
-          'Should the government employ a stricter immigration/border policy?'
+          'Abortion should be legal.',
+          'Governments should have the authority to censor online content.',
+          'The government should employ a stricter immigration/border policy.'
+        ]
+      } else if (state.test_policy_number === 0) {
+        state.masterStatements = [
+          ''
         ]
       }
       // update conversation_exit_turn_number based on turn number
@@ -351,11 +355,13 @@ new Vue({
         if (message.startable) {
           this.alarm_sound.play()
           // show popup message based on the condition
-          let popup_message = 'You will redirect to avatar assignment in 5 seconds'
+          let countdown = 5
+          let popup_message = `Your group is ready! You will redirect to avatar assignment in ${countdown} seconds`
 
-          this.$toast(popup_message, {
+          // Show the toast and keep its id
+          const toastId = this.$toast(popup_message, {
             position: 'top-right',
-            timeout: 4500,
+            timeout: false, // We'll dismiss manually
             closeOnClick: false,
             pauseOnFocusLoss: false,
             pauseOnHover: false,
@@ -367,10 +373,21 @@ new Vue({
             icon: true,
             rtl: false
           })
-          setTimeout(() => {
-            this.setNotReadyToPair()
-            this.$router.push('/avatar-assignment')
-          }, 5000)
+
+          // Set up interval to update the toast message
+          const intervalId = setInterval(() => {
+            countdown--
+            if (countdown > 0) {
+              this.$toast.update(toastId, {
+                content: `Your group is ready! You will redirect to avatar assignment in ${countdown} seconds`
+              })
+            } else {
+              clearInterval(intervalId)
+              this.$toast.dismiss(toastId)
+              this.setNotReadyToPair()
+              this.$router.push('/avatar-assignment')
+            }
+          }, 1000)
         }
       } else if (message.code === 201) { // Both human and AI messages
         let received_msg = message.message
@@ -434,18 +451,7 @@ new Vue({
         const subject_color = subject_obj.avatar_color
         // Only show the warning if the sender is not the current user
         if (!message.all_ready && subject_id !== this.$store.state.subject_id) {
-          this.$toast(
-            { component: ReadyEndToast, props: { subjectColor: subject_color, subjectName: subject_name } },
-            {
-              type: 'warning',
-              position: 'top-left',
-              timeout: false, // persistent
-              closeOnClick: false, // only close with close button
-              closeButton: 'button', // Ensure close button is always visible
-              hideProgressBar: true,
-              toastId: 'ready-to-end-warning'
-            }
-          )
+          notifyReadyToEnd(this.$toast, subject_color, subject_name)
         }
       }
     },

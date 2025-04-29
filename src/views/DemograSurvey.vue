@@ -11,6 +11,8 @@
         <b-button variant="outline-secondary" v-if="$store.state.test === 'Y'" @click="skipSurvey" class="mr-2">Skip to PreDSurvey</b-button>
       </div>
       <div class="content-area">
+  <div class="page-indicator text-center mb-1" v-if="currentStep===1">Page: 2 / 10</div>
+  <div class="page-indicator text-center mb-1" v-if="currentStep===2">Page: 3 / 10</div>
         <ol>
           <template v-if="currentStep===1">
             <li>
@@ -398,6 +400,7 @@
             </li>
           </template>
         </ol>
+
       </div>
       <div class="button-area">
 
@@ -410,6 +413,7 @@
 
 <script>
 import axios from 'axios'
+import { notifyInactivity } from '@/plugins/notificationService.js'
 export default {
   data () {
     const aiMentalCapacityQuestions = [
@@ -427,8 +431,7 @@ export default {
         { text: '30–39', value: '2' },
         { text: '40–49', value: '3' },
         { text: '50–59', value: '4' },
-        { text: '60+', value: '5' },
-        { text: 'Prefer not to answer', value: '6' }
+        { text: '60+', value: '5' }
       ],
       gender: [
         { text: 'Female', value: '1' },
@@ -442,8 +445,7 @@ export default {
         { text: '$50,000–$74,999', value: '4' },
         { text: '$75,000–$99,999', value: '5' },
         { text: '$100,000–$149,999', value: '6' },
-        { text: 'More than $150,000', value: '7' },
-        { text: 'Prefer not to answer', value: '8' }
+        { text: 'More than $150,000', value: '7' }
       ],
       education: [
         { text: 'Less than high school', value: '1' },
@@ -471,8 +473,7 @@ export default {
         { text: 'Jewish', value: '5' },
         { text: 'Buddhist', value: '6' },
         { text: 'No religion', value: '7' },
-        { text: 'Other (please specify)', value: '8' },
-        { text: 'Prefer not to answer', value: '9' }
+        { text: 'Other (please specify)', value: '8' }
       ],
       politics: [
         { text: 'Democrat', value: '1' },
@@ -488,8 +489,7 @@ export default {
         { text: 'Naturalized U.S. Citizen', value: '2' },
         { text: 'Permanent Resident (Green Card holder)', value: '3' },
         { text: 'Temporary Visa holder (e.g., student, work)', value: '4' },
-        { text: 'Other (please specify)', value: '5' },
-        { text: 'Prefer not to answer', value: '6' }
+        { text: 'Other (please specify)', value: '5' }
       ],
       socialMediaRead: [
         { text: 'Never', value: '1' },
@@ -664,12 +664,7 @@ export default {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
-        title: 'Inactivity Warning',
-        variant: 'warning',
-        solid: true,
-        autoHideDelay: 30000
-      })
+      notifyInactivity(this.$bvToast, this.$store.state.test)
     },
     handleInactiveUser () {
       const body = new FormData()

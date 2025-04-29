@@ -1,5 +1,6 @@
 <template>
   <b-jumbotron header-level="5" class="survey-container">
+    <div class="content-area"><div class="page-indicator text-center mb-1">Page: 4 / 10</div></div>
     <template v-slot:header>
       <h2 class="survey-title">Policy Statement Survey</h2>
     </template>
@@ -61,19 +62,20 @@
         </b-card>
       </div>
     </div>
-
     <!-- Final submit button -->
     <div class="button-area">
       <b-button variant="primary" size="lg" @click="finalSubmit">
         <font-awesome-icon :icon="['fas', 'circle-check']" class="mr-2" />
-        Submit and complete
+        Submit
       </b-button>
     </div>
+
   </b-jumbotron>
 </template>
 
 <script>
 import axios from 'axios'
+import { notifyInactivity } from '@/plugins/notificationService.js'
 
 export default {
   data () {
@@ -116,6 +118,7 @@ export default {
     }
   },
   mounted () {
+    window.scrollTo(0, 0)
     // Initialize responses array with empty objects for each statement
     this.responses = this.selectedStatements.map(() => ({
       agreement: null,
@@ -198,12 +201,7 @@ export default {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
-        title: 'Inactivity Warning',
-        variant: 'warning',
-        solid: true,
-        autoHideDelay: 30000
-      })
+      notifyInactivity(this.$bvToast, this.$store.state.test)
     },
     handleInactiveUser () {
       const body = new FormData()

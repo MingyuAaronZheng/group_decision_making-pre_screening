@@ -56,12 +56,6 @@
           </div>
 
           <!-- Countdown Timer -->
-          <div v-if="participantCondition === 3 && allConfirmed" class="countdown-section mt-4">
-            <p class="countdown-text">
-              Redirecting to the discussion room in <strong>{{ countdown }}</strong> seconds...
-            </p>
-            <b-spinner label="Loading..." class="mt-2"></b-spinner>
-          </div>
         </b-col>
         <b-col md="4" class="right-column">
           <div v-if="participantCondition === 3 && isThirdPerson" class="third-person-instructions">
@@ -149,11 +143,10 @@
               </div>
             </div>
           </div>
-
           <!-- Countdown Timer -->
-          <div v-if="participantCondition === 3 && allConfirmed" class="countdown-section mt-4">
+          <div v-if="(participantCondition === 3 && allConfirmed) || participantCondition !== 3" class="countdown-section mt-4">
             <p class="countdown-text">
-              Redirecting to the discussion room in <strong>{{ countdown }}</strong> seconds...
+              Redirecting to the discussion room in <strong>{{ formattedCountdown }}</strong>...
             </p>
             <b-spinner label="Loading..." class="mt-2"></b-spinner>
           </div>
@@ -171,7 +164,7 @@ import axios from 'axios'
 export default {
   data () {
     return {
-      countdown: 5, // 5-second countdown before redirect
+      countdown: this.$store.state.test === 'Y' ? 10 : 20, // 10s if 'Y', 20s if 'N'
       hasReadInstructions: false,
       hasConfirmedInstructions: false,
       allConfirmed: false,
@@ -239,6 +232,11 @@ export default {
         // Map 1,2,3 to 66.7,83.3,100
         return 50 + (level * 16.7)
       }
+    },
+    formattedCountdown () {
+      const minutes = Math.floor(this.countdown / 60)
+      const seconds = this.countdown % 60
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
   },
   methods: {

@@ -1,5 +1,6 @@
 <template>
   <b-jumbotron header-level="5">
+    <div class="content-area"><div class="page-indicator text-center mb-1">Page: 6 / 10</div></div>
     <template v-slot:header>
       Pairing You with Other Participants
     </template>
@@ -11,11 +12,12 @@
         Once all of the group members arrive, we will notify you with a sound and redirect you to the next page.
       </p>
       <p>
-        If no other group member is paired in 5 minutes, we will redirect you back to Prolific.
+        If no other group member is paired in 5 minutes, we will redirect you back to Prolific. <br>
+        <strong style="color: blue;">But don't worry, you will still be paid for your time.</strong>
       </p>
       <p>
         We will bonus you <b>15 cents per minute</b> for your waiting time.<br>
-        The average waiting time is <b>{{ average_waiting_time }}</b> seconds.
+        The average waiting time is <b>{{ average_waiting_time - 5 }}</b> seconds.
       </p>
 
       <CountdownTimer :remain_time="remainingTime" /> <!-- ⏳ Countdown Timer -->
@@ -35,6 +37,7 @@
 
     <div v-if="!isPairing && !isTimedOut" class="text-center mt-4">
     </div>
+
   </b-jumbotron>
 </template>
 

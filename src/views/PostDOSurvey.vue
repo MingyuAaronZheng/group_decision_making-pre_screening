@@ -1,5 +1,6 @@
 <template>
   <div class="centered-survey-wrapper">
+    <div class="page-indicator text-center mb-1">Page: 8 / 10</div>
     <div class="intro-center-frame">
       <div class="highlighted-lead">
         <div class="intro-title">Post-Discussion Questionnaire</div>
@@ -159,6 +160,7 @@
 
 <script>
 import axios from 'axios'
+import { notifyInactivity } from '@/plugins/notificationService.js'
 
 export default {
   data () {
@@ -247,12 +249,7 @@ export default {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
-        title: 'Inactivity Warning',
-        variant: 'warning',
-        solid: true,
-        autoHideDelay: 10000
-      })
+      notifyInactivity(this.$bvToast, this.$store.state.test)
     },
     handleInactiveUser () {
       // Redirect to timeout page
@@ -262,7 +259,7 @@ export default {
       // Record activity when submitting
       this.$store.dispatch('recordActivity')
       if (!this.isFormValid) {
-        alert('Please complete all questions before submitting.')
+        this.$alert('Please complete all required fields.')
         return
       }
 

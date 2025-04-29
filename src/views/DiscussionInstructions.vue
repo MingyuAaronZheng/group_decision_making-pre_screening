@@ -1,5 +1,6 @@
 <template>
   <b-jumbotron header="Discussion Instructions" header-level="4" class="mb-4">
+    <div class="content-area"><div class="page-indicator text-center mb-1">Page: 5 / 10</div></div>
     <div class="content-area bg-light p-4 rounded">
       <h5 class="mt-3 mb-2">What to Expect</h5>
       <p class="mb-3">
@@ -15,7 +16,7 @@
       <h5 class="mt-4 mb-2">Discussion Rules</h5>
       <b-list-group class="mb-3">
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Explain Your Position:</strong> Begin by briefly explaining your stance on the policy.</b-list-group-item>
-        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Message Length:</strong> Each message must contain at least 10 meaningful words. Filler words (like "um", "well", "like", "you know") don't count toward this minimum.</b-list-group-item>
+        <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Message Length:</strong> Each message must contain at least 10 meaningful words. Filler words (such as "um", "well", "like") and repeated words don't count toward this minimum.</b-list-group-item>
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Take Turns to Speak:</strong> If you see "<i>[Participant Name, e.g., pink tiger] is typing</i>" on the interface, wait until the indicator disappears before responding.</b-list-group-item>
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Duration:</strong> After taking four discussion turns, you may continue or proceed to the exit survey.</b-list-group-item>
         <b-list-group-item class="px-3 py-3 mb-3 bg-white border rounded"><strong>Exit Options:</strong> You may leave anytime without penalty.</b-list-group-item>
@@ -26,6 +27,7 @@
     <div class="button-area text-center mt-4">
       <b-button variant="primary" name="next" @click="goToWaitingRoom">Next</b-button>
     </div>
+
   </b-jumbotron>
 </template>
 

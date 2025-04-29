@@ -1,5 +1,6 @@
 <template>
   <div class="centered-survey-wrapper">
+    <div class="page-indicator text-center mb-1">Page: 9 / 10</div>
     <div class="intro-center-frame">
       <b-jumbotron header-level="5" class="highlighted-lead">
         <template v-slot:lead>
@@ -39,7 +40,7 @@
 
         <!-- Attention Check 1 -->
         <div class="section">
-          <p><strong>Attention Check:</strong> What is 35 + 47?</p>
+          <p>What day of the week is today?</p>
           <b-form-radio-group v-model="attentionCheck1" :name="'attentionCheck1'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
             <div class="agreement-wrapper">
               <div v-for="(option, optIndex) in attentionCheck1Options" :key="optIndex" class="option-label-wrapper">
@@ -52,25 +53,41 @@
 
         <!-- Critical Thinking -->
         <div class="section">
-          <div class="text-center">
-            <h4>To what extent do you agree with the following statements regarding your experience?</h4>
-          </div>
-          <div v-for="(statement, index) in criticalThinkingStatements" :key="index" class="mb-3">
-            <p>{{ statement }}</p>
-            <b-form-radio-group v-model="criticalThinkingResponses[index]" :name="'critical_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
-              <div class="agreement-wrapper">
-                <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
-                  <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
-                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
-                </div>
-              </div>
-            </b-form-radio-group>
-          </div>
-        </div>
+  <div class="text-center">
+    <h4>To what extent do you agree with the following statements regarding your experience?</h4>
+  </div>
+  <table class="table agreement-table">
+    <thead>
+      <tr>
+        <th>Statement</th>
+        <th v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+          {{ option.text || getAgreementLabel(option.value) }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(statement, index) in criticalThinkingStatements" :key="index">
+        <td>{{ statement }}</td>
+        <td v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+          <b-form-radio
+            v-model="criticalThinkingResponses[index]"
+            :name="'critical_' + index"
+            :value="option.value"
+            class="custom-radio-button"
+            required
+            @change="onFormInteraction"
+          >
+            <span class="square-dot"></span>
+          </b-form-radio>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
         <!-- Attention Check 2 -->
         <div class="section">
-          <p><strong>Attention Check:</strong> Please select 'Agree' for this statement.</p>
+          <p>Please select 'Agree' for this statement.</p>
           <p>Statement: I have read the instructions carefully.</p>
           <b-form-radio-group v-model="attentionCheck2" :name="'attentionCheck2'" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" @change="onFormInteraction">
             <div class="agreement-wrapper">
@@ -135,19 +152,35 @@
 
         <!-- Cost of Communication -->
         <div class="section">
-          <h4>{{ generateCostPrompt() }}</h4>
-          <div v-for="(statement, index) in costStatements" :key="index" class="mb-3">
-            <p v-html="statement"></p>
-            <b-form-radio-group v-model="costResponses[index]" :name="'cost_' + index" buttons button-variant="outline-black" size="md" class="agreement-options custom-radio-button" required @change="onFormInteraction">
-              <div class="agreement-wrapper">
-                <div v-for="(option, optIndex) in agreementScale" :key="optIndex" class="option-label-wrapper">
-                  <div class="option-label">{{ option.text || getAgreementLabel(option.value) }}</div>
-                  <b-form-radio :value="option.value" class="custom-radio-button"></b-form-radio>
-                </div>
-              </div>
-            </b-form-radio-group>
-          </div>
-        </div>
+  <h4>{{ generateCostPrompt() }}</h4>
+  <table class="table agreement-table">
+    <thead>
+      <tr>
+        <th>Statement</th>
+        <th v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+          {{ option.text || getAgreementLabel(option.value) }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(statement, index) in costStatements" :key="index">
+        <td><span v-html="statement"></span></td>
+        <td v-for="option in agreementScale" :key="option.value" class="text-center align-middle">
+          <b-form-radio
+            v-model="costResponses[index]"
+            :name="'cost_' + index"
+            :value="option.value"
+            class="custom-radio-button"
+            required
+            @change="onFormInteraction"
+          >
+            <span class="square-dot"></span>
+          </b-form-radio>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
         <!-- Submit Button -->
         <div class="button-area mt-4">
@@ -164,8 +197,54 @@
   </div>
 </template>
 
+<style scoped>
+.agreement-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+.agreement-table th,
+.agreement-table td {
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+}
+.agreement-table th {
+  background-color: #f8f9fa;
+}
+.option-label-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 90px;
+  text-align: center;
+}
+.option-label {
+  margin-bottom: 4px;
+  height: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.agreement-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+.agreement-options {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+</style>
+
 <script>
 import axios from 'axios'
+import { notifyInactivity } from '@/plugins/notificationService.js'
 
 export default {
   data () {
@@ -185,10 +264,13 @@ export default {
 
       // Options and statements
       attentionCheck1Options: [
-        { text: '72', value: 72 },
-        { text: '82', value: 82 },
-        { text: '92', value: 92 },
-        { text: '102', value: 102 }
+        { text: 'Monday', value: 1 },
+        { text: 'Tuesday', value: 2 },
+        { text: 'Wednesday', value: 3 },
+        { text: 'Thursday', value: 4 },
+        { text: 'Friday', value: 5 },
+        { text: 'Saturday', value: 6 },
+        { text: 'Sunday', value: 7 }
       ],
       agreementScale: [
         { text: 'Strongly disagree', value: 1 },
@@ -343,24 +425,12 @@ export default {
           this.$server_url + 'post_df_survey',
           formData
         )
-        console.log('Response:', response.data.success)
-        console.log('Attention check 1:', this.attentionCheck1)
-        console.log('Attention check 2:', this.attentionCheck2)
-        let FailAttention = false
-
-        if (this.attentionCheck1 !== 82 || this.attentionCheck2 !== 6) {
-          FailAttention = true
-        }
-        if (FailAttention) {
-          this.$router.push('/FailAttention')
-          return
-        }
-        if (!FailAttention && response.data.success) {
+        if (response.data.success) {
           this.$router.push('/DeBriefing')
         }
       } catch (error) {
         console.error('Error submitting survey:', error)
-        this.$bvToast.toast('An error occurred. Please try again.', {
+        this.$bvToast.toast(`An error occurred. Please try again.\n${error && error.message ? error.message : ''}`, {
           title: 'Error',
           variant: 'danger'
         })
@@ -371,12 +441,7 @@ export default {
       this.$store.dispatch('recordActivity')
     },
     showInactivityWarning () {
-      this.$bvToast.toast('Warning: You appear to be inactive. Please continue with the survey within 30 seconds or you may be removed.', {
-        title: 'Inactivity Warning',
-        variant: 'warning',
-        solid: true,
-        autoHideDelay: 10000
-      })
+      notifyInactivity(this.$bvToast, this.$store.state.test)
     },
     handleInactiveUser () {
       // Redirect to timeout page
@@ -387,6 +452,7 @@ export default {
     // this.$store.commit('startInactivityCheck')
     // window.addEventListener('show-inactivity-warning', this.showInactivityWarning)
     // window.addEventListener('remove-inactive-user', this.handleInactiveUser)
+    window.scrollTo(0, 0)
   },
   beforeDestroy () {
     window.removeEventListener('show-inactivity-warning', this.showInactivityWarning)
@@ -521,8 +587,13 @@ export default {
   margin-top: 0.5rem;
 }
 
+.square-dot {
+  display: inline-block;
+}
+
 .custom-radio-button {
-  margin: 0 !important;
-  padding: 0.5rem !important;
+  display: inline-flex !important;
+  justify-content: center;
+  align-items: center;
 }
 </style>
