@@ -26,16 +26,16 @@
           <span class="text-info entrance-section-subline">You may take part in this study only once.</span>
         </p>
         <b-alert variant="warning" show class="my-4 p-4 font-weight-bold entrance-alert d-flex align-items-center shadow-sm">
-  <b-icon icon="exclamation-triangle-fill" font-scale="1.7" class="mr-3 text-danger" />
-  <div class="entrance-alert-text">
-    <span class="h5 entrance-alert-title">Important Inactivity Rule:</span><br>
-    If you are inactive for <strong>45 seconds</strong>, you will see a warning. If inactivity continues for another <strong>30 seconds</strong> (total <strong>75 seconds</strong>), your study will be terminated.<br>
-    <ul class="mb-0">
-      <li class="text-dark">Even if you are terminated, you will still be paid for the tasks you have completed up to that point.</li>
-      <li class="text-dark">To stay active, interact with the website, such as clicking on option buttons of the surveys, entering text in input boxes.</li>
-    </ul>
-  </div>
-</b-alert>
+          <b-icon icon="info-circle-fill" font-scale="1.7" class="mr-3 text-info" />
+          <div class="entrance-alert-text">
+            <span class="h5 entrance-alert-title">Important Inactivity Rule:</span><br>
+            If you are inactive for <strong>45 seconds</strong>, you will see a warning. If inactivity continues for another <strong>30 seconds</strong> (total <strong>75 seconds</strong>), your study will be terminated.<br>
+            <ul class="mb-0">
+              <li class="text-dark">Even if you are terminated, you will still be paid for the tasks you have completed up to that point.</li>
+              <li class="text-dark">To stay active, interact with the website, such as clicking on option buttons of the surveys, entering text in input boxes.</li>
+            </ul>
+          </div>
+        </b-alert>
         <p class="entrance-section-title mb-4">
           <b-icon icon="arrow-right-circle" class="mr-2 text-primary" />
           Sounds interesting? Click the button below to start the study!

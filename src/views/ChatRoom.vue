@@ -6,13 +6,13 @@
       <p class="chat-statement">
         <strong>Discussion Topic:</strong> {{ chat_statement }}
       </p>
-      <p class="user-stance">
-        <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
-        <strong>{{ avatar_full_name }}'s (Your) Stance:</strong> {{ user_stance }}
-      </p>
       <p class="current-turn">
         <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
         <strong>Your Name:</strong> {{ avatar_full_name }}
+      </p>
+      <p class="user-stance">
+        <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
+        <strong>{{ avatar_full_name }}'s (Your) Stance:</strong> {{ user_stance }}
       </p>
     </div>
 
@@ -82,7 +82,7 @@
           <b-col cols="2"/>
           <b-col cols="9" style="padding-right: 15px;">
             <b-row style="margin-right: 0;" class="justify-content-end">
-              <b-col class="current-user-avatar-name text-end" style="text-align: right; width: 100%;">{{ avatar_part_name }} (You)</b-col>
+              <b-col class="current-user-avatar-name text-end" style="text-align: right; width: 100%;" >{{ avatar_full_name }} (You)</b-col>
             </b-row>
             <b-row style="margin-left: 0;">
               <b-col>
@@ -126,9 +126,9 @@
           max-rows="5"
           resize="none"
           @keydown.enter.native.exact.prevent="sendMessage"
-          @paste.prevent
-          @copy.prevent
-          @cut.prevent
+          @paste="handlePaste"
+          @copy="handleCopy"
+          @cut="handleCut"
           :disabled="isAITyping"
         />
         <b-button
@@ -389,7 +389,9 @@ export default {
       this.$root.sendWebSocketMessage(ready_message)
     },
     showInactivityWarning () {
-      notifyInactivity(this.$bvToast, this.$store.state.test)
+      if (this.$store.state.test === 'N') {
+        notifyInactivity(this.$bvToast, this.$store.state.test)
+      }
     },
     handleInactiveUser () {
       // Send websocket message to notify server
@@ -417,6 +419,21 @@ export default {
       this.typingNotificationTimeout = setTimeout(() => {
         this.typingNotification = null
       }, 3000) // Show typing indicator for 3 seconds
+    },
+    handlePaste (e) {
+      if (this.$store.state.test !== 'Y') {
+        e.preventDefault()
+      }
+    },
+    handleCopy (e) {
+      if (this.$store.state.test !== 'Y') {
+        e.preventDefault()
+      }
+    },
+    handleCut (e) {
+      if (this.$store.state.test !== 'Y') {
+        e.preventDefault()
+      }
     }
   },
   watch: {
@@ -430,6 +447,28 @@ export default {
         })
       },
       deep: true
+    },
+    canExit: {
+      handler (newVal) {
+        if (newVal) {
+          this.$nextTick(() => {
+            const el = this.$refs.roomarea
+            if (el) {
+              const buttonContainer = document.querySelector('.ready-to-end-area')
+              const buttonHeight = buttonContainer?.offsetHeight || 0
+              const buttonMargin = 24 // From my-4
+              const messageAreaPadding = 0 // From .message-area
+              const totalScroll = buttonHeight + buttonMargin + messageAreaPadding
+              el.style.scrollBehavior = 'smooth'
+              el.scrollTop += totalScroll
+              setTimeout(() => {
+                el.style.scrollBehavior = 'auto'
+              }, 500)
+            }
+          })
+        }
+      },
+      immediate: true
     },
     send_out_message (newMessage) {
       // Bump activity on typing
@@ -518,6 +557,9 @@ export default {
     this.$store.commit('startInactivityCheck')
   },
   beforeDestroy () {
+    if (this.$toast) {
+      this.$toast.clear()
+    }
     // Dismiss ready-to-end-warning toast if present
     if (this.$toast && typeof this.$toast.dismiss === 'function') {
       this.$toast.dismiss('ready-to-end-warning')

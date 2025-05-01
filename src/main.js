@@ -2,7 +2,7 @@ import '@babel/polyfill'
 import 'mutationobserver-shim'
 import Vue from 'vue'
 import './plugins/axios'
-import './plugins/bootstrap-vue'
+import { BootstrapVue, IconsPlugin } from './plugins/bootstrap-vue'
 import VueSimpleAlert from './plugins/vue-simple-alert'
 import App from './App.vue'
 import router from './router'
@@ -24,7 +24,10 @@ import { faCircleCheck, faCircleXmark, faCircle, faSkull, faGavel, faRobot } fro
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import VueTour from 'vue-tour'
 import axios from 'axios'
-import { notifyReadyToEnd } from '@/plugins/notificationService.js'
+import { notifyReadyToEnd, clearReadyToEndNotification } from '@/plugins/notificationService.js'
+
+Vue.use(BootstrapVue)
+Vue.use(IconsPlugin)
 
 require('vue-tour/dist/vue-tour.css')
 Amplify.configure(aws_exports)
@@ -237,7 +240,7 @@ const store = new Vuex.Store({
         ]
       } else if (state.test_policy_number === 0) {
         state.masterStatements = [
-          ''
+          'UK should apply to rejoin the European Union.'
         ]
       }
       // update conversation_exit_turn_number based on turn number
@@ -312,6 +315,13 @@ window.addEventListener('beforeunload', (event) => {
   event.returnValue = 'Warning: Leaving this page will invalidate your participation. You will not be compensated if you leave.'
 })
 
+// Clear all toasts on navigation
+router.afterEach(() => {
+  if (Vue.prototype.$toast) {
+    Vue.prototype.$toast.clear()
+  }
+})
+
 new Vue({
   data: function () {
     return {
@@ -329,6 +339,7 @@ new Vue({
   watch: {
     '$store.state.all_ready': function (newVal) {
       if (newVal) {
+        clearReadyToEndNotification(this.$toast)
         this.$router.push('/PostDOSurvey') // Redirect when all are ready
       }
     }
