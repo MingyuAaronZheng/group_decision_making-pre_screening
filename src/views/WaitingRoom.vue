@@ -17,7 +17,7 @@
       </p>
       <p>
         We will bonus you <b>15 cents per minute</b> for your waiting time.<br>
-        The average waiting time is <b>{{ average_waiting_time - 5 }}</b> seconds.
+        The average waiting time is <b>{{ displayWaitingTime }}</b> seconds.
       </p>
 
       <CountdownTimer :remain_time="remainingTime" /> <!-- ⏳ Countdown Timer -->
@@ -60,6 +60,13 @@ export default {
       has_capacity: false
     }
   },
+  computed: {
+    displayWaitingTime () {
+      // Ensure we're displaying a valid number
+      const waitTime = this.average_waiting_time - 5
+      return typeof waitTime === 'number' && !isNaN(waitTime) && waitTime > 0 ? waitTime : 5
+    }
+  },
   methods: {
     startPairing () {
       this.startCountdown()
@@ -69,7 +76,8 @@ export default {
       this.timeout = setTimeout(this.failPairing, 300000) // Redirect after 5 minutes
     },
     updateAverageWaitingTime (averageWaitingTime) {
-      this.average_waiting_time = averageWaitingTime
+      // Ensure we have a valid number
+      this.average_waiting_time = typeof averageWaitingTime === 'number' && !isNaN(averageWaitingTime) ? averageWaitingTime : 10
     },
     checkPairingStatus () {
       const subjectId = this.$store.state.subject_id

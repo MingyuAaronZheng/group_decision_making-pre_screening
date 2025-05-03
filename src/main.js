@@ -447,6 +447,15 @@ new Vue({
               clearInterval(intervalId)
               this.$toast.dismiss(toastId)
               this.setNotReadyToPair()
+              let body = new FormData()
+              body.append('subject_id', this.$store.state.subject_id)
+              axios.post(this.$server_url + 'set_pair_end_time', body)
+                .then(response => {
+                  console.log('Set pair end time response:', response.data)
+                })
+                .catch(error => {
+                  console.error('Error setting pair end time:', error)
+                })
               this.$router.push('/avatar-assignment')
             }
           }, 1000)
