@@ -152,7 +152,7 @@
 
         <!-- Cost of Communication -->
         <div class="section">
-  <h4>{{ generateCostPrompt() }}</h4>
+  <div class="survey-prompt">{{ generateCostPrompt() }}</div>
   <table class="table agreement-table">
     <thead>
       <tr>
@@ -396,12 +396,19 @@ export default {
         const description = this.role === 'moderator'
           ? 'The AI moderator can moderate and coordinate the group discussion.'
           : 'The AI participant can actively participate in the discussion and express its stance or opinions.'
-        return `Imagine using a new platform designed to provide a discussion experience where there exists an AI ${this.role}. ${description}`
+        return `Imagine using a new platform designed to provide a discussion experience where there exists an AI ${this.role}. ${description}.
+
+Reflect on your typical discussion experiences on platforms without AI agents. Compared to those experiences, please indicate the extent to which you agree or disagree with the following statements:`
       } else {
-        const roles = []
-        if (this.hasAIModerator) roles.push('moderator')
-        if (this.hasAIParticipant) roles.push('participant')
-        return `Imagine using a new platform designed to facilitate discussions with the involvement of an AI ${roles.join(' and an AI ')}, similar to the previous discussion you just experienced.`
+        const options = ['AI moderator', 'AI participant', 'AI moderator and an AI participant']
+
+        // Randomly select one of the available options
+        const randomIndex = Math.floor(Math.random() * options.length)
+        const selectedRole = options[randomIndex]
+
+        return `Imagine using a new platform designed to facilitate discussions with the involvement of an ${selectedRole}, similar to the previous discussion you just experienced.
+
+Reflect on your typical discussion experiences on platforms without AI agents. Compared to those experiences, please indicate the extent to which you agree or disagree with the following statements:`
       }
     },
     async submitSurvey () {
@@ -595,5 +602,13 @@ export default {
   display: inline-flex !important;
   justify-content: center;
   align-items: center;
+}
+
+.survey-prompt {
+  white-space: pre-line;
+  margin-bottom: 1rem;
+  font-size: 1.35rem;
+  text-align: left;
+  font-weight: bold;
 }
 </style>

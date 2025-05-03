@@ -54,28 +54,28 @@
               </div>
             </div>
           </div>
-
           <!-- Countdown Timer -->
         </b-col>
         <b-col md="4" class="right-column">
           <div v-if="participantCondition === 3 && isThirdPerson" class="third-person-instructions">
             <h5>Special Instructions for You</h5>
+            <h5><strong>We will bonus you if you do well in this task.</strong></h5>
             <div v-if="random_third_person_prompt === 0" class="advocating-prompt mt-3">
               <h6>Advocating Role:</h6>
-              <p>Your specific task is to advocate for the discussion topic. Try to:</p>
+              <p>Your specific task is to ALWAYS advocate your own position. Try to:</p>
               <ul class="text-left">
-                <li>Support the main arguments of the topic</li>
-                <li>Provide additional evidence or examples</li>
-                <li>Counter any opposing views constructively</li>
+                <li><strong>Champion your stance:</strong> Consistently highlight its benefits, principles, and supporting evidence—use facts, logic, and real-world examples to build a clear, positive case.</li>
+                <li><strong>Stay in your own lane:</strong> Do not mention, quote, or critique the opposing side's arguments, examples, or wording; keep every statement focused solely on strengthening your position.</li>
+                <li><strong>Advance, don't rebut:</strong> When the other side speaks, ignore their points and offer fresh reasons or illustrations that reinforce your stance rather than responding to or comparing with theirs.</li>
               </ul>
             </div>
             <div v-if="random_third_person_prompt === 1" class="disputing-prompt mt-3">
               <h6>Disputing Role:</h6>
-              <p>Your specific task is to challenge the discussion topic. Try to:</p>
+              <p>Your specific task is to ALWAYS dispute the position of others who hold opposite views to yours. Try to:</p>
               <ul class="text-left">
-                <li>Identify weaknesses in the main arguments</li>
-                <li>Provide counter-examples or alternative perspectives</li>
-                <li>Question assumptions underlying the topic</li>
+                <li><strong>Zero-in on others' position:</strong> Use evidence, logic, and real-world examples to expose weaknesses, gaps, or harmful implications in the opponent's stance—every statement should chip away at their argument.</li>
+                <li><strong>Don’t bring up your own side:</strong> Do not mention or praise your own preferred view; avoid presenting its benefits, solutions, or supporting data—focus solely on why the opponent's idea falls short.</li>
+                <li><strong>Counter, don't cultivate:</strong> When the other side speaks, reply with fresh critiques that undermine their point rather than offering alternative proposals or positive cases for any viewpoint.</li>
               </ul>
             </div>
             <b-button
@@ -86,9 +86,20 @@
             >
               I have read and understand these instructions
             </b-button>
+            <div v-if="!hasReadInstructions" class="text-muted mt-2">
+              Please read the instructions carefully. Button enabled in {{ readTimer }}s
+            </div>
           </div>
           <div v-if="participantCondition === 3 && !isThirdPerson && !allConfirmed" class="waiting-message">
-            <p>We are finalizing the discussion environment...</p>
+            <p>We are finalizing the discussion environment, which won't take long.</p>
+            <strong style="color: blue;">Please turn on audio on your device.</strong>
+            <p>Once the environment is ready, we will notify you with a sound and redirect you to the next page.</p>
+            <b-spinner label="Loading..." class="mt-2"></b-spinner>
+          </div>
+          <div v-if="participantCondition === 3 && allConfirmed" class="countdown-section mt-4">
+            <p class="countdown-text">
+              The environment is ready. Redirecting to the discussion room in <strong>{{ formattedCountdown }}</strong>...
+            </p>
             <b-spinner label="Loading..." class="mt-2"></b-spinner>
           </div>
         </b-col>
@@ -146,7 +157,7 @@
           <!-- Countdown Timer -->
           <div v-if="(participantCondition === 3 && allConfirmed) || participantCondition !== 3" class="countdown-section mt-4">
             <p class="countdown-text">
-              Redirecting to the discussion room in <strong>{{ formattedCountdown }}</strong>...
+              The environment is ready. Redirecting to the discussion room in <strong>{{ formattedCountdown }}</strong>...
             </p>
             <b-spinner label="Loading..." class="mt-2"></b-spinner>
           </div>
@@ -166,9 +177,8 @@ export default {
     return {
       countdown: this.$store.state.test === 'Y' ? 10 : 20, // 10s if 'Y', 20s if 'N'
       hasReadInstructions: false,
-      hasConfirmedInstructions: false,
-      allConfirmed: false,
-      checkConfirmationInterval: null,
+      readTimer: 5,
+      readTimerInterval: null,
       random_third_person_prompt: this.$store.state.random_third_person_prompt
     }
   },
@@ -190,7 +200,8 @@ export default {
         return state.participant_condition
       },
       preDiscussionResponses: state => state.preDiscussionResponses,
-      chatStatementIndex: state => state.chat_statement_index
+      chatStatementIndex: state => state.chat_statement_index,
+      allConfirmed: state => state.all_confirmed
     }),
     yourAgreementLevel () {
       // Get the agreement level for the current chat statement
@@ -239,6 +250,13 @@ export default {
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
   },
+  watch: {
+    allConfirmed (newVal) {
+      if (newVal) {
+        this.startCountdown()
+      }
+    }
+  },
   methods: {
     avatarColorHex (colorName) {
       if (!colorName) {
@@ -278,49 +296,33 @@ export default {
         const response = await axios.post(this.$server_url + 'confirm_instructions', formData)
 
         if (response.data.success) {
-          this.hasConfirmedInstructions = true
-          if (response.data.all_confirmed) {
-            this.allConfirmed = true
-            this.startCountdown()
-          }
+          console.log('Instructions confirmed')
         }
       } catch (error) {
         console.error('Error confirming instructions:', error)
       }
-    },
-    async checkGroupConfirmation () {
-      try {
-        const formData = new FormData()
-        formData.append('subject_id', this.$store.state.subject_id)
-        formData.append('group_id', this.$store.state.group_id)
-        const response = await axios.post(this.$server_url + 'confirm_instructions', formData)
-
-        if (response.data.success && response.data.all_confirmed) {
-          this.allConfirmed = true
-          this.startCountdown()
-          clearInterval(this.checkConfirmationInterval)
-        }
-      } catch (error) {
-        console.error('Error checking group confirmation:', error)
-      }
     }
   },
   mounted () {
-    // Start 5-second timer to enable the confirmation button
-    setTimeout(() => {
-      this.hasReadInstructions = true
-    }, 5000)
-    // For non-third persons in 3-person groups, start checking for confirmation status
-    if (this.participantCondition === 3 && !this.isThirdPerson) {
-      this.checkConfirmationInterval = setInterval(this.checkGroupConfirmation, 2000)
-    } else if (this.participantCondition !== 3) { // For groups that are not 3-person, start countdown immediately
+    // Start countdown for instruction-reading lock
+    this.readTimerInterval = setInterval(() => {
+      if (this.readTimer > 0) {
+        this.readTimer--
+      }
+      if (this.readTimer <= 0) {
+        clearInterval(this.readTimerInterval)
+        this.hasReadInstructions = true
+      }
+    }, 1000)
+    if (this.participantCondition !== 3) {
       this.startCountdown()
     }
   },
   beforeDestroy () {
-    if (this.checkConfirmationInterval) {
-      clearInterval(this.checkConfirmationInterval)
+    if (this.readTimerInterval) {
+      clearInterval(this.readTimerInterval)
     }
+    clearTimeout(this.timeout)
   }
 }
 </script>

@@ -84,63 +84,15 @@ export default {
         .then(response => {
           console.log('Pairing response:', response.data)
           this.updateAverageWaitingTime(response.data.average_waiting_time)
-          // console.log('Pairing response:', response.data)
           if (response.data.success) {
             clearInterval(this.pollInterval) // Stop polling on success
-            // Update the store with the response data regardless of has_capacity
-            this.updateStore(response.data)
-            // If the group is full OR the user is already assigned to a group, redirect
+            this.$store.commit('assign_group_id', { group_id: response.data.group_id })
             this.$root.initWebSocket()
           }
         })
         .catch(error => {
           console.error('Error during pairing:', error)
         })
-    },
-
-    updateStore (data) {
-      this.$store.commit('assign_group_id', { group_id: data.group_id })
-      // console.log('Updated group_id:', this.$store.state.group_id)
-      this.$store.commit('assign_participant_condition', data.participant_condition)
-      // console.log('Updated participant_condition:', this.$store.state.participant_condition)
-      this.$store.commit('assign_moderator_condition', data.moderator_condition)
-      // console.log('Updated moderator_condition:', this.$store.state.moderator_condition)
-      this.$store.commit('assign_group_chat_statement', data.chat_statement_indx)
-      // console.log('Updated group_chat_statement:', this.$store.state.chat_statement)
-      this.$store.commit('assign_group_chat_statement_indx', data.chat_statement_indx)
-      // console.log('Updated group_chat_statement_indx:', this.$store.state.chat_statement_index)
-      // Only if is_third_person is true, update is_third_person in store
-      // This is important because requests other than for the third person also has is_third_person attribute, but it is false
-      // This if statement is to prevent the store from being updated if is_third_person is false
-      if (data.is_third_person) {
-        this.$store.commit('assign_is_third_person', data.is_third_person)
-        this.$store.commit('assign_random_third_person_prompt', data.random_third_person_prompt)
-      }
-      // Update avatar if assigned
-      if (data.assigned_avatars && data.assigned_avatars.length > 0) {
-        const subjectId = this.$store.state.subject_id
-        // console.log('Checking for avatar with subject ID:', subjectId)
-        // console.log('Available avatars:', JSON.stringify(data.assigned_avatars))
-
-        const myAvatar = data.assigned_avatars.find(avatar => avatar.subject_id === subjectId)
-        if (myAvatar) {
-        // Check for both possible avatar property formats
-          // console.log('Found my avatar:', JSON.stringify(myAvatar))
-          const avatarColor = myAvatar.avatar_color || myAvatar.color
-          const avatarName = myAvatar.avatar_name || myAvatar.name
-          // console.log('Extracted avatar details:', avatarName, avatarColor)
-
-          this.$store.commit('update_avatar', {
-            avatar_color: avatarColor,
-            avatar_name: avatarName
-          })
-          // console.log('Updated avatar in store:', this.$store.state.avatar_name, this.$store.state.avatar_color)
-        } else {
-          // console.log('No matching avatar found for subject ID:', subjectId)
-        }
-      } else {
-        // console.log('No assigned_avatars in data or empty array')
-      }
     },
 
     failPairing () {
@@ -180,6 +132,22 @@ export default {
         .catch(error => {
           console.error('Error setting ready to pair:', error)
         })
+    },
+    setNotReadyToPair () {
+      const subjectId = this.$store.state.subject_id
+      if (!subjectId || subjectId === -1) {
+        console.error('No subject ID found for setting not ready_to_pair')
+        return
+      }
+      let body = new FormData()
+      body.append('subject_id', subjectId)
+      axios.post(this.$server_url + 'set_not_ready_to_pair', body)
+        .then(response => {
+          // console.log('Set not ready to pair response:', response.data)
+        })
+        .catch(error => {
+          console.error('Error setting not ready to pair:', error)
+        })
     }
   },
 
@@ -187,9 +155,17 @@ export default {
     this.startPairing()
     // Add event listeners to detect when user leaves the page
     window.addEventListener('beforeunload', this.setNotReadyToPair)
+    // Add navigation guard for back button
+    this.$router.beforeEach((to, from, next) => {
+      if (from.path === this.$route.path && to.path !== this.$route.path) {
+        this.setNotReadyToPair()
+      }
+      next()
+    })
   },
 
   beforeDestroy () {
+    this.setNotReadyToPair()
     clearInterval(this.pollInterval)
     clearTimeout(this.timeout)
     // Remove event listeners

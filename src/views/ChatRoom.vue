@@ -260,7 +260,7 @@ export default {
     },
     getAIIcon (subjectId) {
       switch (subjectId) {
-        case -2: return require('@/assets/AI_moderator.jpg') // AI Moderator
+        case -2: return require('@/assets/AI_moderator.png') // AI Moderator
         case -3: return require('@/assets/AI_participant.jpg') // Advocating AI
         case -4: return require('@/assets/AI_participant.jpg') // Disputing AI
         default: return ['fas', 'robot']
@@ -521,27 +521,30 @@ export default {
           }))
           this.memberAgreements = response.data.members
           // Build system messages for each member
-          this.systemMessages = response.data.members.map(member => {
-            let agreementText = 'No response'
-            if (member.agreement_level !== null && member.agreement_level !== undefined) {
-              // Convert agreement value to text
-              const scale = [
-                {text: 'Strongly disagree', value: -3},
-                {text: 'Disagree', value: -2},
-                {text: 'Somewhat disagree', value: -1},
-                {text: 'Neutral', value: 0},
-                {text: 'Somewhat agree', value: 1},
-                {text: 'Agree', value: 2},
-                {text: 'Strongly agree', value: 3}
-              ]
-
-              const found = scale.find(item => item.value === member.agreement_level)
-              agreementText = found ? found.text : member.agreement_level
-            }
-            // Style avatar name and show stance
-            const styledName = `<span>${member.avatar_color} ${member.avatar_name}</span>`
-            return `${styledName}'s Stance: "${agreementText}"`
-          })
+          const messages = response.data.members
+            .filter(member => member.avatar_name !== this.$store.state.avatar_name || member.avatar_color !== this.$store.state.avatar_color)
+            .map(member => {
+              let agreementText = 'No response'
+              if (member.agreement_level !== null && member.agreement_level !== undefined) {
+                const scale = [
+                  {text: 'Strongly disagree', value: -3},
+                  {text: 'Disagree', value: -2},
+                  {text: 'Somewhat disagree', value: -1},
+                  {text: 'Neutral', value: 0},
+                  {text: 'Somewhat agree', value: 1},
+                  {text: 'Agree', value: 2},
+                  {text: 'Strongly agree', value: 3}
+                ]
+                const found = scale.find(item => item.value === member.agreement_level)
+                agreementText = found ? found.text : member.agreement_level
+              }
+              const styledName = `<span>${member.avatar_color} ${member.avatar_name}</span>`
+              return `${styledName}'s Stance: "${agreementText}"`
+            })
+          const header = messages.length === 1 ? 'Your discussion partner:' : 'Your discussion partners:'
+          this.systemMessages = messages.length > 0
+            ? [header, ...messages]
+            : []
         }
       }).catch(error => {
         console.error('Error loading group member agreements:', error)

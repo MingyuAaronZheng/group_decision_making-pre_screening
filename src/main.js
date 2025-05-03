@@ -105,7 +105,8 @@ const store = new Vuex.Store({
       test_participant_code: -1,
       test_policy_number: -1,
       test_turn_number: -1,
-      platform: ''
+      platform: '',
+      all_confirmed: false
     }
   },
   mutations: {
@@ -116,7 +117,7 @@ const store = new Vuex.Store({
       state.random_third_person_prompt = random_third_person_prompt
     },
     assign_is_third_person (state, is_third_person) {
-      state.is_third_person = is_third_person
+      state.is_third_person = true
     },
     // In main.js store configuration
     startHeartbeat (state) {
@@ -259,6 +260,9 @@ const store = new Vuex.Store({
         Vue.prototype.$chat_url = 'wss://gobackend.discussionexperiment.com/ws/chat/'
         Vue.prototype.$test_mode = false
       }
+    },
+    setAllConfirmed (state, all_confirmed) {
+      state.all_confirmed = all_confirmed
     }
   },
   actions: {
@@ -345,6 +349,39 @@ new Vue({
     }
   },
   methods: {
+    updateStore (data) {
+      this.$store.commit('assign_group_id', { group_id: data.group_id })
+      this.$store.commit('assign_participant_condition', data.participant_condition)
+      this.$store.commit('assign_moderator_condition', data.moderator_condition)
+      this.$store.commit('assign_group_chat_statement', data.chat_statement_indx)
+      this.$store.commit('assign_group_chat_statement_indx', data.chat_statement_indx)
+
+      console.log('third_person_id:', data.third_person_id)
+      console.log('subject_id:', this.$store.state.subject_id)
+      console.log('Type of third_person_id:', typeof data.third_person_id)
+      console.log('Type of subject_id:', typeof this.$store.state.subject_id)
+      console.log('Exact comparison:', data.third_person_id === this.$store.state.subject_id)
+      if (data.third_person_id === this.$store.state.subject_id) {
+        this.$store.commit('assign_is_third_person', true)
+        console.log('subject_id:', this.$store.state.subject_id)
+        console.log('random_third_person_prompt:', data.random_third_person_prompt)
+        this.$store.commit('assign_random_third_person_prompt', data.random_third_person_prompt)
+      }
+
+      if (data.assigned_avatars && data.assigned_avatars.length > 0) {
+        const subjectId = this.$store.state.subject_id
+        const myAvatar = data.assigned_avatars.find(avatar => avatar.subject_id === subjectId)
+        if (myAvatar) {
+          const avatarColor = myAvatar.avatar_color || myAvatar.color
+          const avatarName = myAvatar.avatar_name || myAvatar.name
+
+          this.$store.commit('update_avatar', {
+            avatar_color: avatarColor,
+            avatar_name: avatarName
+          })
+        }
+      }
+    },
     initWebSocket () {
       console.log('Initializing WebSocket connection in main method', this.$store.state.group_id)
       const wsUrl = `${this.$chat_url}${this.$store.state.group_id}/`
@@ -361,9 +398,23 @@ new Vue({
     },
     webSocketOnMessage (response) {
       let message = JSON.parse(response.data).message
+      console.log('WebSocket message:', message)
       if (message.code === 101) {
         console.log('WebSocket message:', message)
         if (message.startable) {
+          let data = {
+            'is_third_person': message.is_third_person,
+            'has_capacity': message.has_capacity,
+            'third_person_id': message.third_person_id,
+            'group_id': message.group_id,
+            'group_capacity': message.group_capacity,
+            'moderator_condition': message.moderator_condition,
+            'participant_condition': message.participant_condition,
+            'chat_statement_indx': message.chat_statement_indx,
+            'assigned_avatars': message.assigned_avatars,
+            'random_third_person_prompt': message.random_third_person_prompt
+          }
+          this.updateStore(data)
           this.alarm_sound.play()
           // show popup message based on the condition
           let countdown = 5
@@ -464,6 +515,9 @@ new Vue({
         if (!message.all_ready && subject_id !== this.$store.state.subject_id) {
           notifyReadyToEnd(this.$toast, subject_color, subject_name)
         }
+      } else if (message.code === 300) { // All confirmed
+        this.$store.commit('setAllConfirmed', message.all_confirmed)
+        this.alarm_sound.play()
       }
     },
     webSocketOnOpen (e) {
