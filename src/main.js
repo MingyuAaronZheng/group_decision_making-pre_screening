@@ -394,6 +394,7 @@ new Vue({
       this.websock.onclose = this.webSocketOnClose
     },
     sendWebSocketMessage (msg) {
+      console.log('WebSocket message sent:', msg)
       this.websock.send(JSON.stringify(msg))
     },
     webSocketOnMessage (response) {
@@ -529,6 +530,7 @@ new Vue({
       }
     },
     webSocketOnOpen (e) {
+      console.log('WebSocket connection opened')
       let enter_room = {
         'code': 100,
         'data': {

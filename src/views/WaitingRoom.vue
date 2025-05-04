@@ -162,7 +162,7 @@ export default {
   mounted () {
     this.startPairing()
     // Add event listeners to detect when user leaves the page
-    window.addEventListener('beforeunload', this.setNotReadyToPair)
+    window.addEventListener('unload', this.setNotReadyToPair)
     // Add navigation guard for back button
     this.$router.beforeEach((to, from, next) => {
       if (from.path === this.$route.path && to.path !== this.$route.path) {
@@ -177,7 +177,7 @@ export default {
     clearInterval(this.pollInterval)
     clearTimeout(this.timeout)
     // Remove event listeners
-    window.removeEventListener('beforeunload', this.setNotReadyToPair)
+    window.removeEventListener('unload', this.setNotReadyToPair)
   }
 }
 </script>
