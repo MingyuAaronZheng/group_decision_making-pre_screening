@@ -156,13 +156,20 @@ export default {
         .catch(error => {
           console.error('Error setting not ready to pair:', error)
         })
+    },
+    sendNotReadyBeacon () {
+      const subjectId = this.$store.state.subject_id
+      if (!subjectId || subjectId === -1) return
+      const body = new FormData()
+      body.append('subject_id', subjectId)
+      navigator.sendBeacon(this.$server_url + 'set_not_ready_to_pair', body)
     }
   },
 
   mounted () {
     this.startPairing()
-    // Add event listeners to detect when user leaves the page
-    window.addEventListener('unload', this.setNotReadyToPair)
+    // Use pagehide for actual unload
+    window.addEventListener('pagehide', this.sendNotReadyBeacon)
     // Add navigation guard for back button
     this.$router.beforeEach((to, from, next) => {
       if (from.path === this.$route.path && to.path !== this.$route.path) {
@@ -173,11 +180,11 @@ export default {
   },
 
   beforeDestroy () {
-    this.setNotReadyToPair()
+    this.sendNotReadyBeacon()
     clearInterval(this.pollInterval)
     clearTimeout(this.timeout)
     // Remove event listeners
-    window.removeEventListener('unload', this.setNotReadyToPair)
+    window.removeEventListener('pagehide', this.sendNotReadyBeacon)
   }
 }
 </script>
