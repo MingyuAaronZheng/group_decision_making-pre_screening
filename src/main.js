@@ -436,7 +436,6 @@ new Vue({
             rtl: false
           })
 
-          // Set up interval to update the toast message
           const intervalId = setInterval(() => {
             countdown--
             if (countdown > 0) {
