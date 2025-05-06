@@ -175,7 +175,7 @@ import axios from 'axios'
 export default {
   data () {
     return {
-      countdown: this.$store.state.test === 'Y' ? 10 : 20, // 10s if 'Y', 20s if 'N'
+      countdown: this.$store.state.test === 'Y' ? 5 : 20, // 5s if 'Y', 20s if 'N'
       hasReadInstructions: false,
       readTimer: 5,
       readTimerInterval: null,

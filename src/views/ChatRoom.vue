@@ -17,89 +17,94 @@
     </div>
 
     <!-- System Messages Display Area -->
-    <div class="room-area" ref="roomarea">
-      <!-- System Messages always show at the top, scroll up with chat -->
-      <div v-for="(sysMsg, idx) in systemMessages" :key="'sysmsg-' + idx" class="message-card system-message">
-        <b-row>
-          <b-col cols="12">
-            <div class="system-message-content">
-              <span v-html="sysMsg"></span>
-            </div>
-          </b-col>
-        </b-row>
-      </div>
-      <!-- Chat Messages Display Area -->
-      <div v-for="message in messages" :key="message.id" class="message-card">
-        <!-- AI Messages -->
-        <b-row v-if="message.sender.subject_id < -1">
-          <b-col cols="1" class="vertical-align">
-            <div class="message-avatar-icon">
-              <!-- Different icons for different AI roles -->
-              <div class="ai-icon-container" :style="{ backgroundColor: getAIColorHex(message.sender.subject_id) }">
-                <img :src="getAIIcon(message.sender.subject_id)" class="circle-icon" style="color: white; width: 30px; height: 30px;"/>
-              </div>
-            </div>
-          </b-col>
-          <b-col cols="9" style="padding-left: 0;">
+    <div class="d-flex">
+      <div class="flex-grow-1">
+        <!-- System Messages Display Area and Chat -->
+        <div class="room-area" ref="roomarea">
+          <!-- System Messages always show at the top, scroll up with chat -->
+          <div v-for="(sysMsg, idx) in systemMessages" :key="'sysmsg-' + idx" class="message-card system-message">
             <b-row>
-              <b-col class="message-avatar-name">{{ getAIName(message.sender.subject_id) }}</b-col>
-            </b-row>
-            <b-row>
-              <b-col>
-                <div class="message-content">
-                  <span>{{ message.content }}</span>
+              <b-col cols="12">
+                <div class="system-message-content">
+                  <span v-html="sysMsg"></span>
                 </div>
               </b-col>
             </b-row>
-          </b-col>
-        </b-row>
+          </div>
+          <!-- Chat Messages Display Area -->
+          <div v-for="message in messages" :key="message.id" class="message-card">
+            <!-- AI Messages -->
+            <b-row v-if="message.sender.subject_id < -1">
+              <b-col cols="1" class="vertical-align">
+                <div class="message-avatar-icon">
+                  <!-- Different icons for different AI roles -->
+                  <div class="ai-icon-container" :style="{ backgroundColor: getAIColorHex(message.sender.subject_id) }">
+                    <img :src="getAIIcon(message.sender.subject_id)" class="circle-icon" style="color: white; width: 30px; height: 30px;"/>
+                  </div>
+                </div>
+              </b-col>
+              <b-col cols="9" style="padding-left: 0;">
+                <b-row>
+                  <b-col class="message-avatar-name">{{ getAIName(message.sender.subject_id) }}</b-col>
+                </b-row>
+                <b-row>
+                  <b-col>
+                    <div class="message-content">
+                      <span>{{ message.content }}</span>
+                    </div>
+                  </b-col>
+                </b-row>
+              </b-col>
+            </b-row>
 
-        <!-- Other Users' Messages -->
-        <b-row v-else-if="message.sender.subject_id !== $store.state.subject_id">
-          <b-col cols="1" class="vertical-align">
-            <div class="message-avatar-icon">
-              <v-animal size="30px" :name="message.sender.avatar_name"
-                        :color="message.sender.avatar_color"
-                        class="avatar-icon"/>
-            </div>
-          </b-col>
-          <b-col cols="9" style="padding-left: 0;">
-            <b-row>
-              <b-col class="message-avatar-name" :style="{ color: message.sender.avatar_color }">{{message.sender.avatar_color }} {{ message.sender.avatar_name }}</b-col>
-            </b-row>
-            <b-row>
-              <b-col>
-                <div class="message-content">
-                  <span>{{ message.content }}</span>
+            <!-- Other Users' Messages -->
+            <b-row v-else-if="message.sender.subject_id !== $store.state.subject_id">
+              <b-col cols="1" class="vertical-align">
+                <div class="message-avatar-icon">
+                  <v-animal size="30px" :name="message.sender.avatar_name"
+                            :color="message.sender.avatar_color"
+                            class="avatar-icon"/>
                 </div>
               </b-col>
+              <b-col cols="9" style="padding-left: 0;">
+                <b-row>
+                  <b-col class="message-avatar-name" :style="{ color: message.sender.avatar_color }">{{message.sender.avatar_color }} {{ message.sender.avatar_name }}</b-col>
+                </b-row>
+                <b-row>
+                  <b-col>
+                    <div class="message-content">
+                      <span>{{ message.content }}</span>
+                    </div>
+                  </b-col>
+                </b-row>
+              </b-col>
             </b-row>
-          </b-col>
-        </b-row>
 
-        <!-- Current User's Messages -->
-        <b-row v-else class="own_message">
-          <b-col cols="2"/>
-          <b-col cols="9" style="padding-right: 15px;">
-            <b-row style="margin-right: 0;" class="justify-content-end">
-              <b-col class="current-user-avatar-name text-end" style="text-align: right; width: 100%;" >{{ avatar_full_name }} (You)</b-col>
-            </b-row>
-            <b-row style="margin-left: 0;">
-              <b-col>
-                <div class="message-content">
-                  <span>{{ message.content }}</span>
+            <!-- Current User's Messages -->
+            <b-row v-else class="own_message">
+              <b-col cols="2"/>
+              <b-col cols="9" style="padding-right: 15px;">
+                <b-row style="margin-right: 0;" class="justify-content-end">
+                  <b-col class="current-user-avatar-name text-end" style="text-align: right; width: 100%;" >{{ avatar_full_name }} (You)</b-col>
+                </b-row>
+                <b-row style="margin-left: 0;">
+                  <b-col>
+                    <div class="message-content">
+                      <span>{{ message.content }}</span>
+                    </div>
+                  </b-col>
+                </b-row>
+              </b-col>
+              <b-col cols="1" class="vertical-align" style="text-align: left; padding-right: 0; padding-left: 10px;">
+                <div class="message-avatar-icon">
+                  <v-animal size="30px" :name="$store.state.avatar_name"
+                            :color="$store.state.avatar_color"
+                            class="avatar-icon"/>
                 </div>
               </b-col>
             </b-row>
-          </b-col>
-          <b-col cols="1" class="vertical-align" style="text-align: left; padding-right: 0; padding-left: 10px;">
-            <div class="message-avatar-icon">
-              <v-animal size="30px" :name="$store.state.avatar_name"
-                        :color="$store.state.avatar_color"
-                        class="avatar-icon"/>
-            </div>
-          </b-col>
-        </b-row>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -156,7 +161,45 @@
       </div>
     </div>
 
+    <!-- System Prompt Panel (now fully separate) -->
+    <div v-if="$store.state.test === 'Y'" class="system-panel-container mt-4">
+      <div class="card shadow-sm" style="max-width:800px; margin:0 auto;">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">System Prompt Controls</h6>
+        </div>
+        <div class="card-body">
+          <div class="current-system-message mb-3">
+            <label class="small text-muted mb-1">Current Prompt:</label>
+            <div class="border p-2 bg-light rounded" style="min-height:100px; white-space:pre-wrap; font-size:0.9rem;">
+              {{ currentSystemMessage || "No system prompt set" }}
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <b-button size="sm" variant="outline-secondary" @click="refreshSystemMessage">
+                <i class="fas fa-sync-alt mr-1"></i> Refresh
+              </b-button>
+              <b-button size="sm" variant="outline-primary" @click="copySystemMessage">
+                <i class="fas fa-copy mr-1"></i> Copy
+              </b-button>
+            </div>
+          </div>
+          <div class="system-editor">
+            <label class="small text-muted mb-1">Edit Prompt:</label>
+            <textarea
+              v-model="editedSystemMessage"
+              rows="5"
+              class="form-control mb-2"
+              placeholder="Enter custom system message..."
+            ></textarea>
+            <b-button size="sm" variant="primary" class="w-100" @click="saveSystemMessage">
+              <i class="fas fa-save mr-1"></i> Save Changes
+            </b-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
+
 </template>
 
 <script>
@@ -178,7 +221,9 @@ export default {
       typingNotification: null,
       typingNotificationTimeout: null,
       systemMessages: [], // system messages like "joined" with agreement
-      memberAgreements: [] // raw API data
+      memberAgreements: [], // raw API data
+      currentSystemMessage: '',
+      editedSystemMessage: ''
     }
   },
   computed: {
@@ -434,6 +479,37 @@ export default {
       if (this.$store.state.test !== 'Y') {
         e.preventDefault()
       }
+    },
+    saveSystemMessage () {
+      axios.post(`${this.$server_url}update_system_message`, {
+        group_id: this.$store.state.group_id,
+        system_message: this.editedSystemMessage
+      })
+        .then(() => {
+          this.$bvToast.toast('System prompt saved', 'Saved', {variant: 'success'})
+          this.currentSystemMessage = this.editedSystemMessage
+        })
+        .catch(err => { console.error('save prompt', err); this.$bvToast.toast('Failed to save prompt', 'Error', {variant: 'danger'}) })
+    },
+    refreshSystemMessage () {
+      axios.get(`${this.$server_url}get_system_message`, { params: { group_id: this.$store.state.group_id } })
+        .then(res => {
+          this.currentSystemMessage = res.data.system_message
+          this.$bvToast.toast('Prompt refreshed', {variant: 'success'})
+        })
+        .catch(e => {
+          console.error('refresh prompt', e)
+          this.$bvToast.toast('Refresh failed', {variant: 'danger'})
+        })
+    },
+    copySystemMessage () {
+      if (!this.currentSystemMessage) return
+      navigator.clipboard.writeText(this.currentSystemMessage)
+        .then(() => this.$bvToast.toast('Copied to clipboard', {variant: 'success'}))
+        .catch(err => {
+          console.error('Copy failed:', err)
+          this.$bvToast.toast('Copy failed', {variant: 'danger'})
+        })
     }
   },
   watch: {
@@ -550,6 +626,11 @@ export default {
         console.error('Error loading group member agreements:', error)
         this.systemMessages = ['Failed to load group member agreements.' + error]
       })
+
+    // Load saved system prompt
+    axios.get(`${this.$server_url}get_system_message`, { params: { group_id: this.$store.state.group_id } })
+      .then(res => { this.currentSystemMessage = res.data.system_message })
+      .catch(e => { console.error('load prompt', e) })
 
     // Listen for typing events
     window.addEventListener('user-typing', (event) => this.handleTyping(event.detail))
@@ -790,5 +871,9 @@ export default {
   .message-content {
     max-width: 90%;
   }
+}
+
+.system-panel-container {
+  margin-top: 20px;
 }
 </style>
