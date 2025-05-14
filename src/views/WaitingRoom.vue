@@ -133,7 +133,7 @@ export default {
       }
       let body = new FormData()
       body.append('subject_id', subjectId)
-      axios.post(this.$server_url + 'set_ready_to_pair', body)
+      axios.post(this.$server_url + 'set_pipei', body)
         .then(response => {
           // console.log('Set ready to pair response:', response.data)
         })
@@ -149,7 +149,7 @@ export default {
       }
       let body = new FormData()
       body.append('subject_id', subjectId)
-      axios.post(this.$server_url + 'set_not_ready_to_pair', body)
+      axios.post(this.$server_url + 'set-not-ready', body)
         .then(response => {
           // console.log('Set not ready to pair response:', response.data)
         })
@@ -162,7 +162,7 @@ export default {
       if (!subjectId || subjectId === -1) return
       const body = new FormData()
       body.append('subject_id', subjectId)
-      navigator.sendBeacon(this.$server_url + 'set_not_ready_to_pair', body)
+      navigator.sendBeacon(this.$server_url + 'set-not-ready', body)
     }
   },
 

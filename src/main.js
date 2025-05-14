@@ -449,12 +449,12 @@ new Vue({
               this.setNotReadyToPair()
               let body = new FormData()
               body.append('subject_id', this.$store.state.subject_id)
-              axios.post(this.$server_url + 'set_pair_end_time', body)
+              axios.post(this.$server_url + 'set_pipei_end_time', body)
                 .then(response => {
-                  console.log('Set pair end time response:', response.data)
+                  console.log('Set pipei end time response:', response.data)
                 })
                 .catch(error => {
-                  console.error('Error setting pair end time:', error)
+                  console.error('Error setting pipei end time:', error)
                 })
               this.$router.push('/avatar-assignment')
             }
@@ -557,7 +557,7 @@ new Vue({
       }
       let body = new FormData()
       body.append('subject_id', subjectId)
-      axios.post(this.$server_url + 'set_not_ready_to_pair', body)
+      axios.post(this.$server_url + 'set-not-ready', body)
         .then(response => {
           console.log('Set not ready to pair response:', response.data)
         })
