@@ -1,5 +1,21 @@
 <template>
   <b-jumbotron header="Discussion Instructions" header-level="4" class="mb-4">
+    <!-- Tutorial video (local .mp4) -->
+    <div class="content-area mb-4">
+      <video
+        ref="tutorialVideo"
+        controls
+        class="w-100 rounded"
+        @ended="onVideoEnded"
+      >
+        <source src="@/assets/tutorial.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <div v-if="!videoEnded" class="text-center mt-2 text-muted">
+        Please watch the full tutorial to unlock the Next button.
+      </div>
+    </div>
+
     <div class="content-area"><div class="page-indicator text-center mb-1">Page: 5 / 10</div></div>
     <div class="content-area bg-light p-4 rounded">
       <h5 class="mt-3 mb-2">What to Expect</h5>
@@ -25,7 +41,7 @@
     </div>
 
     <div class="button-area text-center mt-4">
-      <b-button variant="primary" name="next" @click="goToWaitingRoom">Next</b-button>
+      <b-button variant="primary" name="next" @click="goToWaitingRoom" :disabled="!videoEnded">Next</b-button>
     </div>
 
   </b-jumbotron>
@@ -33,7 +49,15 @@
 
 <script>
 export default {
+  data() {
+    return {
+      videoEnded: false
+    }
+  },
   methods: {
+    onVideoEnded() {
+      this.videoEnded = true;
+    },
     goToWaitingRoom () {
       this.$router.push('/WaitingRoom')
     }
