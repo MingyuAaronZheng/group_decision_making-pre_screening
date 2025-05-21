@@ -49,14 +49,14 @@
 
 <script>
 export default {
-  data() {
+  data () {
     return {
       videoEnded: false
     }
   },
   methods: {
-    onVideoEnded() {
-      this.videoEnded = true;
+    onVideoEnded () {
+      this.videoEnded = true
     },
     goToWaitingRoom () {
       this.$router.push('/WaitingRoom')
