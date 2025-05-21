@@ -1,21 +1,5 @@
 <template>
-  <b-jumbotron header="Discussion Instructions" header-level="4" class="mb-4">
-    <!-- Tutorial video (local .mp4) -->
-    <div class="content-area mb-4">
-      <video
-        ref="tutorialVideo"
-        controls
-        class="w-100 rounded"
-        @ended="onVideoEnded"
-      >
-        <source src="@/assets/tutorial.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-      <div v-if="!videoEnded" class="text-center mt-2 text-muted">
-        Please watch the full tutorial to unlock the Next button.
-      </div>
-    </div>
-
+  <b-jumbotron header="Discussion Instructions" header-level="4" class="mb-4 fs-5">
     <div class="content-area"><div class="page-indicator text-center mb-1">Page: 5 / 10</div></div>
     <div class="content-area bg-light p-4 rounded">
       <h5 class="mt-3 mb-2">What to Expect</h5>
@@ -40,6 +24,23 @@
       </b-list-group>
     </div>
 
+    <!-- Tutorial video (local .mp4) -->
+    <h5 class="mt-4 mb-2 text-center">Tutorial Video</h5>
+    <div class="content-area mb-4">
+      <video
+      ref="tutorialVideo"
+      :src="dropboxRawUrl"
+      controls
+      preload="metadata"
+      class="w-100 rounded"
+      @ended="onVideoEnded"
+    >
+      Sorry, your browser doesn’t support embedded videos.
+    </video>
+      <div v-show="!videoEnded" class="text-center mt-2 text-muted">
+        Please watch the full tutorial to unlock the Next button.
+      </div>
+    </div>
     <div class="button-area text-center mt-4">
       <b-button variant="primary" name="next" @click="goToWaitingRoom" :disabled="!videoEnded">Next</b-button>
     </div>
@@ -51,7 +52,8 @@
 export default {
   data () {
     return {
-      videoEnded: false
+      videoEnded: false,
+      dropboxRawUrl: 'https://dl.dropboxusercontent.com/scl/fi/h1xnumflaz8ex9w249bul/tutorial.mp4?rlkey=o94vlehz5y03elpy2oqp3kvjr&st=qndk5bsj&dl=0'
     }
   },
   methods: {
