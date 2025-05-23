@@ -184,6 +184,9 @@ export default {
     clearInterval(this.pollInterval)
     clearTimeout(this.timeout)
     // Remove event listeners
+    const body = new FormData()
+    body.append('subject_id', this.$store.state.subject_id)
+    navigator.sendBeacon(this.$server_url + 'set-not-ready', body)
     window.removeEventListener('pagehide', this.sendNotReadyBeacon)
   }
 }
