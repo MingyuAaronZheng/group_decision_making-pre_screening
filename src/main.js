@@ -28,7 +28,7 @@ import { notifyReadyToEnd, clearReadyToEndNotification } from '@/plugins/notific
 
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
-
+console.log('Alarm sound URL:', sound)
 require('vue-tour/dist/vue-tour.css')
 Amplify.configure(aws_exports)
 Vue.config.productionTip = false
