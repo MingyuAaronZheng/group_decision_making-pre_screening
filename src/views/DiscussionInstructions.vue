@@ -40,6 +40,9 @@
       <div v-show="!videoEnded" class="text-center mt-2 text-muted">
         Please watch the full tutorial to unlock the Next button.
       </div>
+      <div v-if="this.$store.state.test==='Y'" class="button-area text-center mt-4">
+      <b-button variant="primary" name="next" @click="enableNext">Enable Next (Test mode only)</b-button>
+    </div>
     </div>
     <div class="button-area text-center mt-4">
       <b-button variant="primary" name="next" @click="goToWaitingRoom" :disabled="!videoEnded">Next</b-button>
@@ -58,6 +61,9 @@ export default {
   },
   methods: {
     onVideoEnded () {
+      this.videoEnded = true
+    },
+    enableNext () {
       this.videoEnded = true
     },
     goToWaitingRoom () {
