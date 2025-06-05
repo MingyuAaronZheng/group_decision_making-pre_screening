@@ -545,7 +545,7 @@ export default {
         const container = document.createElement('div')
         container.innerHTML = `<div>${message}</div>`
         container.appendChild(button)
-        
+
         // Show the toast
         this.$bvToast.toast(container, {
           id: toastId,
@@ -557,7 +557,7 @@ export default {
           noHoverPause: true,
           isHtml: true
         })
-        
+
         console.log('Member left notification shown with ID:', toastId)
       }, 100) // Small delay to ensure Vue has finished rendering
 
