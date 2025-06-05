@@ -564,12 +564,14 @@ export default {
   watch: {
     '$store.state.memberLeftChat': {
       handler (newVal) {
-        if (newVal) {
+        // Skip if this is a reset or if there's no message
+        if (newVal && newVal.message && !newVal.reset) {
           console.log('Store state changed - member left chat detected')
-          this.showMemberLeftNotification(this.$store.state.leftMemberMessage)
+          this.showMemberLeftNotification(newVal.message)
         }
       },
-      immediate: true
+      immediate: true,
+      deep: true
     },
     messages: {
       handler () {
@@ -628,6 +630,12 @@ export default {
   mounted () {
     // Scroll to top when component is mounted
     window.scrollTo(0, 0)
+
+    // Reset the member left state when component mounts
+    this.$store.commit('setMemberLeftChat', {
+      message: '',
+      reset: true // Add a flag to indicate this is a reset
+    })
 
     // Ensure WebSocket is initialized
     if (!this.$root.websock || this.$root.websock.readyState !== WebSocket.OPEN) {

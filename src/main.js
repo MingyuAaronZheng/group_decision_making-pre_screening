@@ -264,9 +264,14 @@ const store = new Vuex.Store({
     setAllConfirmed (state, all_confirmed) {
       state.all_confirmed = all_confirmed
     },
-    setMemberLeftChat (state, { message }) {
-      state.memberLeftChat = true
-      state.leftMemberMessage = message || 'A group member has left the chat'
+    setMemberLeftChat (state, { message, reset = false }) {
+      if (reset) {
+        state.memberLeftChat = false
+        state.leftMemberMessage = ''
+      } else {
+        state.memberLeftChat = true
+        state.leftMemberMessage = message || 'A group member has left the chat'
+      }
     }
   },
   actions: {
@@ -580,9 +585,15 @@ new Vue({
         } catch (e) {
           console.error('[DEBUG] Error showing direct notification:', e)
         }
-        // Play a sound to alert the user
-        if (this.alarm_sound) {
-          this.alarm_sound.play().catch(e => console.log('Error playing sound:', e))
+        // Play a sound to alert the user if available
+        try {
+          if (this.alarm_sound && typeof this.alarm_sound.play === 'function') {
+            this.alarm_sound.play().catch(e => console.log('Error playing sound:', e))
+          } else {
+            console.log('alarm_sound not available or not playable:', this.alarm_sound)
+          }
+        } catch (e) {
+          console.error('Error handling alarm sound:', e)
         }
       }
     },
