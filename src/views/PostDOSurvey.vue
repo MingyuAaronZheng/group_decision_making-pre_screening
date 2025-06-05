@@ -292,6 +292,9 @@ export default {
     }
   },
   mounted () {
+    // Scroll to top when component is mounted
+    window.scrollTo(0, 0)
+
     this.$store.commit('startInactivityCheck')
     window.addEventListener('show-inactivity-warning', this.showInactivityWarning)
     window.addEventListener('remove-inactive-user', this.handleInactiveUser)

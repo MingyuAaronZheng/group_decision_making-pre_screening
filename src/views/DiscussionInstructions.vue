@@ -59,6 +59,10 @@ export default {
       dropboxRawUrl: 'https://dl.dropboxusercontent.com/scl/fi/h1xnumflaz8ex9w249bul/tutorial.mp4?rlkey=o94vlehz5y03elpy2oqp3kvjr&st=qndk5bsj&dl=0'
     }
   },
+  mounted () {
+    // Scroll to top when component is mounted
+    window.scrollTo(0, 0)
+  },
   methods: {
     onVideoEnded () {
       this.videoEnded = true

@@ -167,6 +167,8 @@ export default {
   },
 
   mounted () {
+    // Scroll to top when component is mounted
+    window.scrollTo(0, 0)
     this.startPairing()
     // Use pagehide for actual unload
     window.addEventListener('pagehide', this.sendNotReadyBeacon)

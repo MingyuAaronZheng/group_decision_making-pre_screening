@@ -263,6 +263,10 @@ const store = new Vuex.Store({
     },
     setAllConfirmed (state, all_confirmed) {
       state.all_confirmed = all_confirmed
+    },
+    setMemberLeftChat (state, { message }) {
+      state.memberLeftChat = true
+      state.leftMemberMessage = message || 'A group member has left the chat'
     }
   },
   actions: {
@@ -527,6 +531,59 @@ new Vue({
       } else if (message.code === 300) { // All confirmed
         this.$store.commit('setAllConfirmed', message.all_confirmed)
         this.alarm_sound.play()
+      } else if (message.code === 132) { // Inactive user notification
+        console.log('[DEBUG] Received inactive user notification:', JSON.stringify(message, null, 2))
+
+        // Debug: Log Vue app structure
+        console.log('[DEBUG] Vue app structure:', {
+          app: document.querySelector('#app'),
+          vueInstance: document.querySelector('#app').__vue__,
+          children: document.querySelector('#app').__vue__?.$children?.map(c => c.$options?.name)
+        })
+
+        // Try to find the ChatRoom component
+        let chatComponent = null
+        try {
+          chatComponent = document.querySelector('#app').__vue__.$children[0].$children.find(
+            child => child.$options?.name === 'ChatRoom'
+          )
+          console.log('[DEBUG] Found ChatRoom component:', !!chatComponent)
+        } catch (e) {
+          console.error('[DEBUG] Error finding ChatRoom component:', e)
+        }
+
+        // Try direct notification first
+        if (chatComponent && typeof chatComponent.showMemberLeftNotification === 'function') {
+          console.log('[DEBUG] Calling showMemberLeftNotification directly')
+          chatComponent.showMemberLeftNotification(message.message || 'A group member has left the chat')
+          return
+        }
+        console.log('[DEBUG] Falling back to store update')
+        // Fallback to store update
+        this.$store.commit('setMemberLeftChat', {
+          message: message.message || 'A group member has left the chat'
+        })
+
+        // Try to show notification directly as a last resort
+        try {
+          console.log('[DEBUG] Attempting to show notification directly')
+          const app = document.querySelector('#app').__vue__
+          if (app && app.$bvToast) {
+            app.$bvToast.toast(message.message || 'A group member has left the chat', {
+              title: 'Member Left',
+              variant: 'warning',
+              solid: true,
+              noAutoHide: true
+            })
+            console.log('[DEBUG] Direct notification shown')
+          }
+        } catch (e) {
+          console.error('[DEBUG] Error showing direct notification:', e)
+        }
+        // Play a sound to alert the user
+        if (this.alarm_sound) {
+          this.alarm_sound.play().catch(e => console.log('Error playing sound:', e))
+        }
       }
     },
     webSocketOnOpen (e) {

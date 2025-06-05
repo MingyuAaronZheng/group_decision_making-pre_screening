@@ -223,7 +223,8 @@ export default {
       systemMessages: [], // system messages like "joined" with agreement
       memberAgreements: [], // raw API data
       currentSystemMessage: '',
-      editedSystemMessage: ''
+      editedSystemMessage: '',
+      memberLeftToastId: null
     }
   },
   computed: {
@@ -289,6 +290,16 @@ export default {
     }
   },
   methods: {
+    proceedToNextSurvey (toastId) {
+      // Hide the notification
+      if (toastId) {
+        this.$bvToast.hide(toastId)
+      } else if (this.memberLeftToastId) {
+        this.$bvToast.hide(this.memberLeftToastId)
+      }
+      // Navigate to the next survey
+      this.$router.push('/PostDOSurvey')
+    },
     bumpActivityOnClick () {
       this.$store.commit('updateLastActivity')
     },
@@ -510,9 +521,56 @@ export default {
           console.error('Copy failed:', err)
           this.$bvToast.toast('Copy failed', {variant: 'danger'})
         })
+    },
+    showMemberLeftNotification (message = 'A group member has left the chat') {
+      console.log('Showing member left notification with message:', message)
+      // Create a unique ID for this toast
+      const toastId = `member-left-${Date.now()}`
+
+      // Hide any existing member left toasts
+      if (this.memberLeftToastId) {
+        this.$bvToast.hide(this.memberLeftToastId)
+      }
+      this.memberLeftToastId = toastId
+
+      // Show a toast notification with a button to proceed to the next survey
+      this.$nextTick(() => {
+        this.$bvToast.toast(
+          [
+            message,
+            this.$createElement('div', { class: 'mt-2' }, [
+              this.$createElement('b-button', {
+                props: { variant: 'primary', size: 'sm' },
+                on: { click: () => this.proceedToNextSurvey(toastId) }
+              }, 'Proceed to Next Survey')
+            ])
+          ],
+          {
+            id: toastId,
+            title: 'Member Left',
+            variant: 'warning',
+            solid: true,
+            noAutoHide: true,
+            noCloseButton: true,
+            noHoverPause: true
+          }
+        )
+        console.log('Notification should be visible now')
+      })
+
+      return toastId
     }
   },
   watch: {
+    '$store.state.memberLeftChat': {
+      handler (newVal) {
+        if (newVal) {
+          console.log('Store state changed - member left chat detected')
+          this.showMemberLeftNotification(this.$store.state.leftMemberMessage)
+        }
+      },
+      immediate: true
+    },
     messages: {
       handler () {
         this.$nextTick(() => {
@@ -568,6 +626,9 @@ export default {
     }
   },
   mounted () {
+    // Scroll to top when component is mounted
+    window.scrollTo(0, 0)
+
     // Ensure WebSocket is initialized
     if (!this.$root.websock || this.$root.websock.readyState !== WebSocket.OPEN) {
       this.$root.initWebSocket()

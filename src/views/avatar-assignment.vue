@@ -304,6 +304,9 @@ export default {
     }
   },
   mounted () {
+    // Scroll to top when component is mounted
+    window.scrollTo(0, 0)
+
     // Start countdown for instruction-reading lock
     this.readTimerInterval = setInterval(() => {
       if (this.readTimer > 0) {

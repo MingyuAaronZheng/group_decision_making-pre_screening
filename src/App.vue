@@ -32,8 +32,8 @@ export default {
   },
   watch: {
     '$store.state.subject_id' (newSubjectId) {
-      if (newSubjectId) {
-        this.$store.dispatch('initializeHeartbeat') // Start heartbeat when subject_id is assigned
+      if (newSubjectId && this.$store.state.group_id !== -1) {
+        this.$store.dispatch('initializeHeartbeat') // Start heartbeat when both subject_id and group_id are assigned
       }
     }
   },
