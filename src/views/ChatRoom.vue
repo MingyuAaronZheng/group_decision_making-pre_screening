@@ -526,37 +526,40 @@ export default {
       console.log('Showing member left notification with message:', message)
       // Create a unique ID for this toast
       const toastId = `member-left-${Date.now()}`
-
-      // Hide any existing member left toasts
-      if (this.memberLeftToastId) {
-        this.$bvToast.hide(this.memberLeftToastId)
-      }
       this.memberLeftToastId = toastId
 
-      // Show a toast notification with a button to proceed to the next survey
-      this.$nextTick(() => {
-        this.$bvToast.toast(
-          [
-            message,
-            this.$createElement('div', { class: 'mt-2' }, [
-              this.$createElement('b-button', {
-                props: { variant: 'primary', size: 'sm' },
-                on: { click: () => this.proceedToNextSurvey(toastId) }
-              }, 'Proceed to Next Survey')
-            ])
-          ],
-          {
-            id: toastId,
-            title: 'Member Left',
-            variant: 'warning',
-            solid: true,
-            noAutoHide: true,
-            noCloseButton: true,
-            noHoverPause: true
-          }
-        )
-        console.log('Notification should be visible now')
-      })
+      // Use a small timeout to ensure the DOM is ready
+      setTimeout(() => {
+        // Hide any existing member left toasts
+        if (this.memberLeftToastId && this.memberLeftToastId !== toastId) {
+          this.$bvToast.hide(this.memberLeftToastId)
+        }
+
+        // Create the button element
+        const button = document.createElement('button')
+        button.className = 'btn btn-primary btn-sm mt-2'
+        button.textContent = 'Proceed to Next Survey'
+        button.onclick = () => this.proceedToNextSurvey(toastId)
+
+        // Create a container for the message and button
+        const container = document.createElement('div')
+        container.innerHTML = `<div>${message}</div>`
+        container.appendChild(button)
+        
+        // Show the toast
+        this.$bvToast.toast(container, {
+          id: toastId,
+          title: 'Member Left',
+          variant: 'warning',
+          solid: true,
+          noAutoHide: true,
+          noCloseButton: true,
+          noHoverPause: true,
+          isHtml: true
+        })
+        
+        console.log('Member left notification shown with ID:', toastId)
+      }, 100) // Small delay to ensure Vue has finished rendering
 
       return toastId
     }

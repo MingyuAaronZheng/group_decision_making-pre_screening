@@ -406,8 +406,19 @@ new Vue({
       console.log('WebSocket message sent:', msg)
       this.websock.send(JSON.stringify(msg))
     },
+    playNotificationSound () {
+      try {
+        if (this.alarm_sound && typeof this.alarm_sound.play === 'function') {
+          this.alarm_sound.play().catch(e => console.log('Error playing sound:', e))
+        } else {
+          console.log('alarm_sound not available or not playable:', this.alarm_sound)
+        }
+      } catch (e) {
+        console.error('Error handling alarm sound:', e)
+      }
+    },
     webSocketOnMessage (response) {
-      let message = JSON.parse(response.data).message
+      const message = JSON.parse(response.data).message
       console.log('WebSocket message:', message)
       if (message.code === 101) {
         console.log('WebSocket message:', message)
@@ -539,17 +550,17 @@ new Vue({
       } else if (message.code === 132) { // Inactive user notification
         console.log('[DEBUG] Received inactive user notification:', JSON.stringify(message, null, 2))
 
-        // Debug: Log Vue app structure
-        console.log('[DEBUG] Vue app structure:', {
-          app: document.querySelector('#app'),
-          vueInstance: document.querySelector('#app').__vue__,
-          children: document.querySelector('#app').__vue__?.$children?.map(c => c.$options?.name)
-        })
+        // Only process if we haven't shown this notification yet
+        if (this.lastNotificationMessage === message.message) {
+          console.log('[DEBUG] Duplicate notification, skipping')
+          return
+        }
+        this.lastNotificationMessage = message.message
 
         // Try to find the ChatRoom component
         let chatComponent = null
         try {
-          chatComponent = document.querySelector('#app').__vue__.$children[0].$children.find(
+          chatComponent = document.querySelector('#app')?.__vue__?.$children[0]?.$children?.find(
             child => child.$options?.name === 'ChatRoom'
           )
           console.log('[DEBUG] Found ChatRoom component:', !!chatComponent)
@@ -557,43 +568,18 @@ new Vue({
           console.error('[DEBUG] Error finding ChatRoom component:', e)
         }
 
-        // Try direct notification first
-        if (chatComponent && typeof chatComponent.showMemberLeftNotification === 'function') {
+        // Play sound first
+        this.playNotificationSound()
+
+        // Use direct notification if available, otherwise use store
+        if (chatComponent?.showMemberLeftNotification) {
           console.log('[DEBUG] Calling showMemberLeftNotification directly')
           chatComponent.showMemberLeftNotification(message.message || 'A group member has left the chat')
-          return
-        }
-        console.log('[DEBUG] Falling back to store update')
-        // Fallback to store update
-        this.$store.commit('setMemberLeftChat', {
-          message: message.message || 'A group member has left the chat'
-        })
-
-        // Try to show notification directly as a last resort
-        try {
-          console.log('[DEBUG] Attempting to show notification directly')
-          const app = document.querySelector('#app').__vue__
-          if (app && app.$bvToast) {
-            app.$bvToast.toast(message.message || 'A group member has left the chat', {
-              title: 'Member Left',
-              variant: 'warning',
-              solid: true,
-              noAutoHide: true
-            })
-            console.log('[DEBUG] Direct notification shown')
-          }
-        } catch (e) {
-          console.error('[DEBUG] Error showing direct notification:', e)
-        }
-        // Play a sound to alert the user if available
-        try {
-          if (this.alarm_sound && typeof this.alarm_sound.play === 'function') {
-            this.alarm_sound.play().catch(e => console.log('Error playing sound:', e))
-          } else {
-            console.log('alarm_sound not available or not playable:', this.alarm_sound)
-          }
-        } catch (e) {
-          console.error('Error handling alarm sound:', e)
+        } else {
+          console.log('[DEBUG] Falling back to store update')
+          this.$store.commit('setMemberLeftChat', {
+            message: message.message || 'A group member has left the chat'
+          })
         }
       }
     },
