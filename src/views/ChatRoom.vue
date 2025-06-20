@@ -6,19 +6,34 @@
       <p class="chat-statement">
         <strong>Discussion Topic:</strong> {{ chat_statement }}
       </p>
-      <p class="current-turn">
-        <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
-        <strong>Your Name:</strong> {{ avatar_full_name }}
-      </p>
-      <p class="user-stance">
-        <v-animal size="30px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
-        <strong>{{ avatar_full_name }}'s (Your) Stance:</strong> {{ user_stance }}
-      </p>
+      <div class="user-info">
+        <v-animal size="45px" :name="$store.state.avatar_name" :color="$store.state.avatar_color" class="avatar-icon"/>
+        <span class="info-item"><strong>Your Name:</strong> {{ avatar_full_name }}</span>
+        <span class="info-divider">|</span>
+        <span class="info-item"><strong>Your Stance:</strong> {{ user_stance }}</span>
+      </div>
+    </div>
+
+    <!-- Ready to End Button in Top Panel -->
+    <div v-if="canExit" class="ready-to-end-area d-flex justify-content-center my-2">
+      <div :style="isReadyToEnd ? 'max-width: 250px; width: 100%;' : 'max-width: 400px; width: 100%;'">
+        <b-button
+          @click="handleReadyToEnd"
+          :variant="isReadyToEnd ? 'success' : 'warning'"
+          class="exit-button w-100"
+          :disabled="isReadyToEnd"
+          style="white-space: normal;"
+        >
+          <span style="padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+            {{ isReadyToEnd ? 'You indicated you are ready to end the discussion. We are waiting for other participants to do the same.' : 'When you are ready to end the discussion, click this button' }}
+          </span>
+        </b-button>
+      </div>
     </div>
 
     <!-- System Messages Display Area -->
-    <div class="d-flex">
-      <div class="flex-grow-1">
+    <div class="chat-container">
+      <div class="messages-wrapper">
         <!-- System Messages Display Area and Chat -->
         <div class="room-area" ref="roomarea">
           <!-- System Messages always show at the top, scroll up with chat -->
@@ -147,59 +162,8 @@
       </b-input-group>
     </div>
 
-    <!-- Ready to End Button and Status -->
-    <div v-if="canExit" class="ready-to-end-area d-flex justify-content-center my-4" style="padding: 0;">
-      <div class="button-container d-flex justify-content-center">
-        <b-button
-          @click="handleReadyToEnd"
-          :variant="isReadyToEnd ? 'success' : 'warning'"
-          class="exit-button"
-          :disabled="isReadyToEnd"
-        >
-          {{ isReadyToEnd ? 'You indicated you are ready to end the discussion. We are waiting for other participants to do the same.' : 'When you are ready to end the discussion, click this button' }}
-        </b-button>
-      </div>
-    </div>
-
-    <!-- System Prompt Panel (now fully separate) -->
-    <div v-if="$store.state.test === 'Y'" class="system-panel-container mt-4">
-      <div class="card shadow-sm" style="max-width:800px; margin:0 auto;">
-        <div class="card-header bg-light">
-          <h6 class="mb-0">System Prompt Controls</h6>
-        </div>
-        <div class="card-body">
-          <div class="current-system-message mb-3">
-            <label class="small text-muted mb-1">Current Prompt:</label>
-            <div class="border p-2 bg-light rounded" style="min-height:100px; white-space:pre-wrap; font-size:0.9rem;">
-              {{ currentSystemMessage || "No system prompt set" }}
-            </div>
-            <div class="d-flex justify-content-between mt-2">
-              <b-button size="sm" variant="outline-secondary" @click="refreshSystemMessage">
-                <i class="fas fa-sync-alt mr-1"></i> Refresh
-              </b-button>
-              <b-button size="sm" variant="outline-primary" @click="copySystemMessage">
-                <i class="fas fa-copy mr-1"></i> Copy
-              </b-button>
-            </div>
-          </div>
-          <div class="system-editor">
-            <label class="small text-muted mb-1">Edit Prompt:</label>
-            <textarea
-              v-model="editedSystemMessage"
-              rows="5"
-              class="form-control mb-2"
-              placeholder="Enter custom system message..."
-            ></textarea>
-            <b-button size="sm" variant="primary" class="w-100" @click="saveSystemMessage">
-              <i class="fas fa-save mr-1"></i> Save Changes
-            </b-button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <!-- Ready to End Button moved to top panel -->
   </div>
-
 </template>
 
 <script>
@@ -222,8 +186,6 @@ export default {
       typingNotificationTimeout: null,
       systemMessages: [], // system messages like "joined" with agreement
       memberAgreements: [], // raw API data
-      currentSystemMessage: '',
-      editedSystemMessage: '',
       memberLeftToastId: null
     }
   },
@@ -498,83 +460,71 @@ export default {
       })
         .then(() => {
           this.$bvToast.toast('System prompt saved', 'Saved', {variant: 'success'})
-          this.currentSystemMessage = this.editedSystemMessage
-        })
-        .catch(err => { console.error('save prompt', err); this.$bvToast.toast('Failed to save prompt', 'Error', {variant: 'danger'}) })
-    },
-    refreshSystemMessage () {
-      axios.get(`${this.$server_url}get_system_message`, { params: { group_id: this.$store.state.group_id } })
-        .then(res => {
-          this.currentSystemMessage = res.data.system_message
-          this.$bvToast.toast('Prompt refreshed', {variant: 'success'})
-        })
-        .catch(e => {
-          console.error('refresh prompt', e)
-          this.$bvToast.toast('Refresh failed', {variant: 'danger'})
         })
     },
-    copySystemMessage () {
-      if (!this.currentSystemMessage) return
-      navigator.clipboard.writeText(this.currentSystemMessage)
-        .then(() => this.$bvToast.toast('Copied to clipboard', {variant: 'success'}))
-        .catch(err => {
-          console.error('Copy failed:', err)
-          this.$bvToast.toast('Copy failed', {variant: 'danger'})
-        })
-    },
-    showMemberLeftNotification (message = 'A group member has left the chat') {
+    showMemberLeftNotification (message = 'Due to certain reasons, a group member has left the chat. However, the study will continue. Please click the button to proceed to the next survey.') {
       console.log('Showing member left notification with message:', message)
       // Create a unique ID for this toast
       const toastId = `member-left-${Date.now()}`
       this.memberLeftToastId = toastId
 
-      // Use a small timeout to ensure the DOM is ready
+      // Create a simple toast with just the message first
+      this.$bvToast.toast(message, {
+        id: toastId,
+        title: 'Member Left',
+        variant: 'warning',
+        solid: true,
+        noAutoHide: true,
+        noCloseButton: true,
+        noHoverPause: true
+      })
+
+      // After a short delay, find the toast and add our button
       setTimeout(() => {
         // Hide any existing member left toasts
         if (this.memberLeftToastId && this.memberLeftToastId !== toastId) {
           this.$bvToast.hide(this.memberLeftToastId)
         }
 
-        // Create the button element
-        const button = document.createElement('button')
-        button.className = 'btn btn-primary btn-sm mt-2'
-        button.textContent = 'Proceed to Next Survey'
-        button.onclick = () => this.proceedToNextSurvey(toastId)
+        // Find the toast element
+        const toastElement = document.getElementById(toastId)
+        if (toastElement) {
+          // Create the button
+          const button = document.createElement('button')
+          button.className = 'btn btn-primary btn-sm mt-2'
+          button.textContent = 'Proceed to Next Survey'
+          button.onclick = () => this.proceedToNextSurvey(toastId)
 
-        // Create a container for the message and button
-        const container = document.createElement('div')
-        container.innerHTML = `<div>${message}</div>`
-        container.appendChild(button)
-
-        // Show the toast
-        this.$bvToast.toast(container, {
-          id: toastId,
-          title: 'Member Left',
-          variant: 'warning',
-          solid: true,
-          noAutoHide: true,
-          noCloseButton: true,
-          noHoverPause: true,
-          isHtml: true
-        })
+          // Find the toast body and append the button
+          const toastBody = toastElement.querySelector('.toast-body')
+          if (toastBody) {
+            toastBody.appendChild(button)
+          }
+        }
 
         console.log('Member left notification shown with ID:', toastId)
-      }, 100) // Small delay to ensure Vue has finished rendering
+      }, 100) // Small delay to ensure toast is in the DOM
 
       return toastId
     }
   },
   watch: {
     '$store.state.memberLeftChat': {
-      handler (newVal) {
-        // Skip if this is a reset or if there's no message
-        if (newVal && newVal.message && !newVal.reset) {
-          console.log('Store state changed - member left chat detected')
-          this.showMemberLeftNotification(newVal.message)
+      handler (newVal, oldVal) {
+        console.group('memberLeftChat watcher triggered')
+        console.log('New value:', newVal)
+        console.log('Old value:', oldVal)
+        console.log('leftMemberMessage:', this.$store.state.leftMemberMessage)
+        console.log('Call stack:')
+        console.trace()
+        console.groupEnd()
+
+        if (newVal === true) {
+          const message = this.$store.state.leftMemberMessage || 'Due to certain reasons, a group member has left the chat. However, the study will continue. Please click the button to proceed to the next survey.'
+          console.log('Member left chat detected - showing notification:', message)
+          this.showMemberLeftNotification(message)
         }
-      },
-      immediate: true,
-      deep: true
+      }
     },
     messages: {
       handler () {
@@ -633,12 +583,6 @@ export default {
   mounted () {
     // Scroll to top when component is mounted
     window.scrollTo(0, 0)
-
-    // Reset the member left state when component mounts
-    this.$store.commit('setMemberLeftChat', {
-      message: '',
-      reset: true // Add a flag to indicate this is a reset
-    })
 
     // Ensure WebSocket is initialized
     if (!this.$root.websock || this.$root.websock.readyState !== WebSocket.OPEN) {
@@ -759,6 +703,9 @@ export default {
   height: 100vh;
   padding: 20px;
   background: #f5f7fa;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
 }
 
 .statement-area {
@@ -766,24 +713,61 @@ export default {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto 20px;
   max-width: 600px;
   width: 100%;
+  flex-shrink: 0;
 }
 
-.chat-statement, .user-stance {
+.chat-statement {
+  margin: 0 0 30px 0;
+  padding: 8px 0;
+  color: #2c3e50;
+  font-size: 1.6em;
+  font-weight: 500;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin: 0;
   padding: 8px 0;
   color: #2c3e50;
+}
+
+.info-item {
+  white-space: nowrap;
+}
+
+.info-divider {
+  color: #6c757d;
+  font-weight: bold;
+  padding: 0 8px;
+  font-size: 1.1em;
+  opacity: 0.7;
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+.messages-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .room-area {
   flex: 1;
   overflow-y: auto;
   padding: 20px 0;
-  margin-bottom: 20px;
+  min-height: 0;
 }
 
 .message-card {
@@ -860,6 +844,11 @@ export default {
   padding: 16px;
   border-radius: 12px;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  margin-top: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+  width: 100%;
 }
 
 .message-input-area {

@@ -57,7 +57,8 @@ export default {
       timeout: null,
       remainingTime: 300, // 5 minutes countdown
       average_waiting_time: 10,
-      has_capacity: false
+      has_capacity: false,
+      memberLeftToastId: null
     }
   },
   computed: {
@@ -68,6 +69,77 @@ export default {
     }
   },
   methods: {
+    proceedToNextSurvey (toastId) {
+      // Hide the notification
+      if (toastId) {
+        this.$bvToast.hide(toastId)
+      } else if (this.memberLeftToastId) {
+        this.$bvToast.hide(this.memberLeftToastId)
+      }
+      // Navigate to the next survey
+      this.$router.push('/PostDOSurvey')
+    },
+
+    showMemberLeftNotification (message = 'Due to certain reasons, a group member has left the chat. However, the study will continue. Please click the button to proceed to the next survey.') {
+      console.log('Showing member left notification with message:', message)
+
+      // Show initial notification
+      this.$bvToast.toast('You were successfully grouped, but before finalizing the environment, one group member has left.', {
+        title: 'Grouping Update',
+        variant: 'info',
+        solid: true,
+        noAutoHide: true,
+        noCloseButton: true
+      })
+
+      // Show member left notification after a short delay
+      setTimeout(() => {
+        const toastId = `member-left-${Date.now()}`
+        this.memberLeftToastId = toastId
+
+        // Create a simple toast with just the message first
+        this.$bvToast.toast(message, {
+          id: toastId,
+          title: 'Member Left',
+          variant: 'warning',
+          solid: true,
+          noAutoHide: true,
+          noCloseButton: true,
+          noHoverPause: true
+        })
+
+        // After a short delay, find the toast and add our button
+        this.setupMemberLeftToast(toastId, message)
+      }, 10000) // 10 second delay before showing member left notification
+    },
+
+    setupMemberLeftToast (toastId, message) {
+      setTimeout(() => {
+        // Hide any existing member left toasts
+        if (this.memberLeftToastId && this.memberLeftToastId !== toastId) {
+          this.$bvToast.hide(this.memberLeftToastId)
+        }
+
+        // Find the toast element
+        const toastElement = document.getElementById(toastId)
+        if (toastElement) {
+          // Create the button
+          const button = document.createElement('button')
+          button.className = 'btn btn-primary btn-sm mt-2'
+          button.textContent = 'Proceed to Next Survey'
+          button.onclick = () => this.proceedToNextSurvey(toastId)
+
+          // Find the toast body and append the button
+          const toastBody = toastElement.querySelector('.toast-body')
+          if (toastBody) {
+            toastBody.appendChild(button)
+          }
+        }
+      }, 100) // Small delay to ensure toast is in the DOM
+
+      return toastId
+    },
+
     startPairing () {
       this.startCountdown()
       this.setReadyToPair()
@@ -181,6 +253,23 @@ export default {
     })
   },
 
+  watch: {
+    '$store.state.memberLeftChat': {
+      handler (newVal) {
+        console.group('memberLeftChat watcher triggered in WaitingRoom')
+        console.log('New value:', newVal)
+        console.log('leftMemberMessage:', this.$store.state.leftMemberMessage)
+        console.groupEnd()
+
+        if (newVal === true) {
+          const message = this.$store.state.leftMemberMessage || 'Due to certain reasons, a group member has left the chat. However, the study will continue. Please click the button to proceed to the next survey.'
+          console.log('Member left chat detected in WaitingRoom - showing notification:', message)
+          this.showMemberLeftNotification(message)
+        }
+      }
+    }
+  },
+
   beforeDestroy () {
     this.sendNotReadyBeacon()
     clearInterval(this.pollInterval)
@@ -190,6 +279,10 @@ export default {
     body.append('subject_id', this.$store.state.subject_id)
     navigator.sendBeacon(this.$server_url + 'set-not-ready', body)
     window.removeEventListener('pagehide', this.sendNotReadyBeacon)
+    // Clear any member left notifications
+    if (this.memberLeftToastId) {
+      this.$bvToast.hide(this.memberLeftToastId)
+    }
   }
 }
 </script>

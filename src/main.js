@@ -67,6 +67,23 @@ const store = new Vuex.Store({
   //   setItem: (key, value) => Cookies.set(key, value, { expires: 3, secure: false }),
   //   removeItem: key => Cookies.remove(key)
   // })],
+  data () {
+    return {
+      websock: null,
+      alarm_sound: null,
+      lastNotificationMessage: null
+    }
+  },
+  created () {
+    // Initialize sound
+    try {
+      this.alarm_sound = new Audio(require('@/assets/alert.mp3'))
+      // Preload the sound
+      this.alarm_sound.load()
+    } catch (e) {
+      console.error('Failed to load notification sound:', e)
+    }
+  },
   state () {
     return {
       subject_id: null,
@@ -106,7 +123,9 @@ const store = new Vuex.Store({
       test_policy_number: -1,
       test_turn_number: -1,
       platform: '',
-      all_confirmed: false
+      all_confirmed: false,
+      memberLeftChat: false,
+      leftMemberMessage: ''
     }
   },
   mutations: {
@@ -264,14 +283,9 @@ const store = new Vuex.Store({
     setAllConfirmed (state, all_confirmed) {
       state.all_confirmed = all_confirmed
     },
-    setMemberLeftChat (state, { message, reset = false }) {
-      if (reset) {
-        state.memberLeftChat = false
-        state.leftMemberMessage = ''
-      } else {
-        state.memberLeftChat = true
-        state.leftMemberMessage = message || 'A group member has left the chat'
-      }
+    setMemberLeftChat (state, { message }) {
+      state.memberLeftChat = true
+      state.leftMemberMessage = message || 'A group member has left the chat'
     }
   },
   actions: {
@@ -279,6 +293,7 @@ const store = new Vuex.Store({
       commit('setPreDiscussionResponses', responses)
     },
     initializeHeartbeat ({ commit, state }) {
+      console.log('Initializing heartbeat in action main', state.subject_id)
       if (!state.heartbeatInterval) {
         commit('startHeartbeat')
       }
@@ -407,19 +422,28 @@ new Vue({
       this.websock.send(JSON.stringify(msg))
     },
     playNotificationSound () {
-      try {
-        if (this.alarm_sound && typeof this.alarm_sound.play === 'function') {
-          this.alarm_sound.play().catch(e => console.log('Error playing sound:', e))
-        } else {
-          console.log('alarm_sound not available or not playable:', this.alarm_sound)
-        }
-      } catch (e) {
-        console.error('Error handling alarm sound:', e)
+      if (!this.alarm_sound) {
+        console.log('Sound not initialized, skipping play')
+        return
+      }
+
+      // Reset the sound to the beginning in case it's already playing
+      this.alarm_sound.pause()
+      this.alarm_sound.currentTime = 0
+
+      // Play without using .catch() to prevent the error
+      const playPromise = this.alarm_sound.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log('Sound playback prevented:', error)
+        })
       }
     },
     webSocketOnMessage (response) {
-      const message = JSON.parse(response.data).message
-      console.log('WebSocket message:', message)
+      const data = JSON.parse(response.data)
+      const message = data.message || data
+      console.log('WebSocket message received:', message)
+
       if (message.code === 101) {
         console.log('WebSocket message:', message)
         if (message.startable) {
@@ -550,37 +574,19 @@ new Vue({
       } else if (message.code === 132) { // Inactive user notification
         console.log('[DEBUG] Received inactive user notification:', JSON.stringify(message, null, 2))
 
-        // Only process if we haven't shown this notification yet
-        if (this.lastNotificationMessage === message.message) {
-          console.log('[DEBUG] Duplicate notification, skipping')
-          return
-        }
-        this.lastNotificationMessage = message.message
-
-        // Try to find the ChatRoom component
-        let chatComponent = null
-        try {
-          chatComponent = document.querySelector('#app')?.__vue__?.$children[0]?.$children?.find(
-            child => child.$options?.name === 'ChatRoom'
-          )
-          console.log('[DEBUG] Found ChatRoom component:', !!chatComponent)
-        } catch (e) {
-          console.error('[DEBUG] Error finding ChatRoom component:', e)
-        }
+        // Extract the actual message text
+        const notificationMessage = message.message || 'A group member has left the chat'
 
         // Play sound first
         this.playNotificationSound()
 
-        // Use direct notification if available, otherwise use store
-        if (chatComponent?.showMemberLeftNotification) {
-          console.log('[DEBUG] Calling showMemberLeftNotification directly')
-          chatComponent.showMemberLeftNotification(message.message || 'A group member has left the chat')
-        } else {
-          console.log('[DEBUG] Falling back to store update')
+        // Show notification
+        console.log('[DEBUG] Calling showMemberLeftNotification directly')
+        this.$nextTick(() => {
           this.$store.commit('setMemberLeftChat', {
-            message: message.message || 'A group member has left the chat'
+            message: notificationMessage
           })
-        }
+        })
       }
     },
     webSocketOnOpen (e) {
