@@ -103,7 +103,6 @@ const store = new Vuex.Store({
         'The government should cut taxes for the wealthy.',
         'Unpredictability in U.S. foreign policy is an effective deterrent against hostile actions from other nations.'
       ], // Store master statements
-      heartbeatInterval: null,
       chat_statement_index: null,
       chat_statement: null,
       all_ready: false, // Tracks whether all human members are ready
@@ -138,22 +137,7 @@ const store = new Vuex.Store({
     assign_is_third_person (state, is_third_person) {
       state.is_third_person = true
     },
-    // In main.js store configuration
-    startHeartbeat (state) {
-      if (!state.heartbeatInterval) {
-        state.heartbeatInterval = setInterval(() => {
-          axios.post(Vue.prototype.$server_url + 'heartbeat', {
-            subject_id: state.subject_id
-          })
-        }, 10000)
-      }
-    },
-    stopHeartbeat (state) {
-      if (state.heartbeatInterval) {
-        clearInterval(state.heartbeatInterval)
-        state.heartbeatInterval = null
-      }
-    },
+    // Heartbeat functionality has been removed
     assign_participant_condition (state, participant_condition) {
       state.participant_condition = participant_condition
     },
@@ -292,22 +276,6 @@ const store = new Vuex.Store({
     updatePreDiscussionResponses ({ commit }, responses) {
       commit('setPreDiscussionResponses', responses)
     },
-    initializeHeartbeat ({ commit, state }) {
-      console.log('Initializing heartbeat in action main', state.subject_id)
-      if (!state.heartbeatInterval) {
-        commit('startHeartbeat')
-      }
-    },
-    terminateHeartbeat ({ commit }) {
-      commit('stopHeartbeat')
-    },
-    recordActivity ({ commit, state }) {
-      commit('updateLastActivity')
-      // Also send a heartbeat to the server
-      axios.post(Vue.prototype.$server_url + 'heartbeat', {
-        subject_id: state.subject_id
-      }).catch(error => console.error('Error sending heartbeat:', error))
-    },
     initWebSocket ({ commit, state }) {
       console.log('Initializing WebSocket connection in action main', state.$ws_url)
       return new Promise((resolve, reject) => {
@@ -335,12 +303,6 @@ const store = new Vuex.Store({
     getSelectedStatements: (state) => state.masterStatements,
     getPreDiscussionResponses: (state) => state.preDiscussionResponses
   }
-})
-
-// Keep only this part for browser close/refresh warning
-window.addEventListener('beforeunload', (event) => {
-  event.preventDefault()
-  event.returnValue = 'Warning: Leaving this page will invalidate your participation. You will not be compensated if you leave.'
 })
 
 // Clear all toasts on navigation

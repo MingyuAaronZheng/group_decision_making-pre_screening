@@ -36,25 +36,52 @@ export default {
   data () {
     return {
       reasons: [],
-      otherReason: ''
+      otherReason: '',
+      isSubmitting: false
     }
   },
   methods: {
-    submit (event) {
-      const body = new FormData()
-      body.append('subject_id', this.$store.state.subject_id)
-      body.append('status', 'early_exit')
-      body.append('reasons', JSON.stringify(this.reasons))
-      body.append('other_reason', this.otherReason)
-      axios.post(this.$server_url + 'submit_to_prolific', body)
-        .then(response => {
-          if (response.data.success === true) {
-            window.location.href = response.data.prolific_url
-          } else {
-            alert('Some error happened! Please submit the HIT on Prolific manually.')
-          }
-        })
-        .catch(e => { alert('Some error happened! Please submit the HIT on Prolific manually.' + e) })
+    async submit (event) {
+      if (event) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      if (this.isSubmitting) return
+
+      this.isSubmitting = true
+
+      try {
+        // First terminate the participation
+        const terminateBody = new FormData()
+        terminateBody.append('subject_id', this.$store.state.subject_id)
+        await axios.post(this.$server_url + 'terminate_participation', terminateBody)
+
+        // Then submit to Prolific
+        const body = new FormData()
+        body.append('subject_id', this.$store.state.subject_id)
+        body.append('status', 'early_exit')
+        body.append('reasons', JSON.stringify(this.reasons))
+        body.append('other_reason', this.otherReason)
+
+        const response = await axios.post(this.$server_url + 'submit_to_prolific', body)
+
+        if (response.data.success === true) {
+          // Use window.open to open in a new tab and prevent unload events
+          window.open(response.data.prolific_url, '_blank')
+          // Small delay to ensure the new tab opens before we potentially close this one
+          setTimeout(() => {
+            // This will close the tab if it was opened by JavaScript
+            window.close()
+          }, 1000)
+        } else {
+          throw new Error('Failed to submit to Prolific')
+        }
+      } catch (error) {
+        console.error('Error in submit:', error)
+        this.isSubmitting = false
+        alert('An error occurred. Please submit the HIT on Prolific manually.')
+      }
     }
   }
 }

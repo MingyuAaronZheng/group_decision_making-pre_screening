@@ -207,11 +207,11 @@ export default {
       const body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
       axios.post(this.$server_url + 'terminate_participation', body)
-        .then(response => {
+        .then(() => {
           this.$router.push('/InactivityTerminatedParticipation')
         })
         .catch(error => {
-          console.error(error)
+          console.error('Error terminating participation:', error)
         })
     }
   },

@@ -1,5 +1,8 @@
 <template>
-  <b-jumbotron header-level="5">
+  <div>
+    <!-- Hidden iframe for termination requests -->
+    <iframe id="termination-frame" style="display: none;"></iframe>
+    <b-jumbotron header-level="5">
     <div class="content-area"><div class="page-indicator text-center mb-1">Page: 6 / 10</div></div>
     <template v-slot:header>
       Pairing You with Other Participants
@@ -38,7 +41,8 @@
     <div v-if="!isPairing && !isTimedOut" class="text-center mt-4">
     </div>
 
-  </b-jumbotron>
+    </b-jumbotron>
+  </div>
 </template>
 
 <script>
@@ -58,7 +62,9 @@ export default {
       remainingTime: 300, // 5 minutes countdown
       average_waiting_time: 10,
       has_capacity: false,
-      memberLeftToastId: null
+      memberLeftToastId: null,
+      isNavigating: false,
+      shouldTerminate: false
     }
   },
   computed: {
@@ -231,10 +237,131 @@ export default {
     },
     sendNotReadyBeacon () {
       const subjectId = this.$store.state.subject_id
-      if (!subjectId || subjectId === -1) return
-      const body = new FormData()
-      body.append('subject_id', subjectId)
-      navigator.sendBeacon(this.$server_url + 'set-not-ready', body)
+      if (!subjectId || subjectId === -1) {
+        console.log('No valid subject ID, skipping set-not-ready')
+        return
+      }
+
+      const serverUrl = this.$server_url
+      const endpoint = 'set-not-ready'
+      const subjectIdStr = String(subjectId)
+
+      console.log('Attempting to send set-not-ready for subject:', subjectIdStr)
+
+      // 1. First try: sendBeacon (most reliable for page unload)
+      try {
+        const url = new URL(endpoint, serverUrl).toString()
+        const formData = new FormData()
+        formData.append('subject_id', subjectIdStr)
+        const beaconSent = navigator.sendBeacon(url, formData)
+        console.log('Not-ready request sent via sendBeacon, success:', beaconSent)
+      } catch (e) {
+        console.error('Error with sendBeacon:', e)
+      }
+
+      // 2. Second try: iframe with form submission (POST request)
+      try {
+        const iframe = document.getElementById('termination-frame')
+        if (iframe && iframe.contentWindow) {
+          const form = document.createElement('form')
+          form.method = 'POST'
+          form.action = new URL(endpoint, serverUrl).toString()
+
+          const subjectIdInput = document.createElement('input')
+          subjectIdInput.type = 'hidden'
+          subjectIdInput.name = 'subject_id'
+          subjectIdInput.value = subjectIdStr
+
+          form.appendChild(subjectIdInput)
+          document.body.appendChild(form)
+          form.submit()
+          document.body.removeChild(form)
+
+          console.log('Not-ready request sent via iframe form')
+        }
+      } catch (e) {
+        console.error('Error with iframe form method:', e)
+      }
+
+      // 3. Third try: Image beacon (works in most browsers)
+      try {
+        const img = new Image()
+        const url = new URL(endpoint, serverUrl)
+        url.searchParams.append('subject_id', subjectIdStr)
+        // Add timestamp to prevent caching
+        url.searchParams.append('_', Date.now())
+        img.src = url.toString()
+        console.log('Not-ready request sent via image beacon')
+      } catch (e) {
+        console.error('Error with image beacon:', e)
+      }
+
+      // 4. Last resort: sync XHR (might be blocked by some browsers)
+      try {
+        const xhr = new XMLHttpRequest()
+        const url = new URL(endpoint, serverUrl).toString()
+        const formData = new FormData()
+        formData.append('subject_id', subjectIdStr)
+        xhr.open('POST', url, false) // Synchronous
+        xhr.send(formData)
+        console.log('Sync XHR not-ready request sent with status:', xhr.status)
+      } catch (e) {
+        console.error('Error with sync XHR:', e)
+      }
+    },
+
+    // Send not ready using all available methods
+    sendNotReady () {
+      this.sendNotReadyBeacon()
+    },
+
+    setupNavigationGuards () {
+      // Set flag when navigation starts
+      this.$router.beforeEach((to, from, next) => {
+        this.isNavigating = true
+        if (from.path === this.$route.path && to.path !== this.$route.path) {
+          this.setNotReadyToPair()
+        }
+        next()
+      })
+
+      // Reset flag after navigation is complete
+      this.$router.afterEach(() => {
+        this.$nextTick(() => {
+          this.isNavigating = false
+        })
+      })
+    },
+
+    handleBeforeUnload (event) {
+      // Only show confirmation if this is a tab close/page refresh
+      if (!this.isNavigating) {
+        // Don't set any flags here, just show the confirmation
+        const message = 'Are you sure you want to leave? You may lose your place in the queue.'
+        event.returnValue = message
+        if (event.cancelable) {
+          event.preventDefault()
+        }
+        return message
+      }
+      return undefined
+    },
+
+    handlePageHide (event) {
+      // Only send not-ready if this is not a page navigation and the page is not being restored from bfcache
+      if (!this.isNavigating && !event.persisted) {
+        console.log('Page is being hidden, sending not-ready')
+        this.sendNotReady()
+      }
+    },
+
+    // Keep handleUnload for older browsers that don't support pagehide
+    handleUnload () {
+      // This is a fallback and will only run if pagehide didn't fire
+      if (!this.isNavigating && !window.performance.getEntriesByType('navigation').some(nav => nav.type === 'back_forward')) {
+        console.log('Page is unloading (fallback), sending not-ready')
+        this.sendNotReady()
+      }
     }
   },
 
@@ -242,15 +369,14 @@ export default {
     // Scroll to top when component is mounted
     window.scrollTo(0, 0)
     this.startPairing()
-    // Use pagehide for actual unload
-    window.addEventListener('pagehide', this.sendNotReadyBeacon)
-    // Add navigation guard for back button
-    this.$router.beforeEach((to, from, next) => {
-      if (from.path === this.$route.path && to.path !== this.$route.path) {
-        this.setNotReadyToPair()
-      }
-      next()
-    })
+
+    // Set up navigation guards
+    this.setupNavigationGuards()
+
+    // Set up unload handlers
+    window.addEventListener('beforeunload', this.handleBeforeUnload)
+    window.addEventListener('pagehide', this.handlePageHide)
+    window.addEventListener('unload', this.handleUnload) // Fallback for older browsers
   },
 
   watch: {
@@ -271,14 +397,21 @@ export default {
   },
 
   beforeDestroy () {
-    this.sendNotReadyBeacon()
+    console.log('WaitingRoom component destroying, sending not-ready')
+    // Only send not-ready if this is not a normal navigation
+    if (!this.isNavigating) {
+      this.sendNotReady()
+    }
+
+    // Clean up intervals and timeouts
     clearInterval(this.pollInterval)
     clearTimeout(this.timeout)
+
     // Remove event listeners
-    const body = new FormData()
-    body.append('subject_id', this.$store.state.subject_id)
-    navigator.sendBeacon(this.$server_url + 'set-not-ready', body)
-    window.removeEventListener('pagehide', this.sendNotReadyBeacon)
+    window.removeEventListener('beforeunload', this.handleBeforeUnload)
+    window.removeEventListener('pagehide', this.handlePageHide)
+    window.removeEventListener('unload', this.handleUnload)
+
     // Clear any member left notifications
     if (this.memberLeftToastId) {
       this.$bvToast.hide(this.memberLeftToastId)

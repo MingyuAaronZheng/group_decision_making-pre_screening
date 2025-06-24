@@ -68,11 +68,12 @@ export default {
   created () {
     // Optionally notify server about termination
     if (this.$store.state.subject_id) {
-      axios.post(this.$server_url + 'terminate_participation', {
-        subject_id: this.$store.state.subject_id
-      }).catch(error => {
-        console.error('Error notifying termination:', error)
-      })
+      const body = new FormData()
+      body.append('subject_id', this.$store.state.subject_id)
+      axios.post(this.$server_url + 'terminate_participation', body)
+        .catch(error => {
+          console.error('Error notifying termination:', error)
+        })
     }
   }
 }
