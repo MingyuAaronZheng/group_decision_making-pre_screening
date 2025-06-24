@@ -41,6 +41,62 @@ export default {
     }
   },
   methods: {
+    logToServer (logData) {
+      // Use sendBeacon for reliability during page unload
+      try {
+        const url = new URL('client_logs', this.$server_url).toString()
+        const data = new FormData()
+        data.append('logs', JSON.stringify({
+          ...logData,
+          timestamp: logData.timestamp || new Date().toISOString(),
+          url: window.location.href,
+          userAgent: navigator.userAgent
+        }))
+        navigator.sendBeacon(url, data)
+      } catch (e) {
+        console.error('Error sending log to server:', e)
+      }
+    },
+    storeLog (level, ...args) {
+      if (!window.appLogs) {
+        window.appLogs = []
+      }
+      const timestamp = new Date().toISOString()
+      const message = args.map(arg =>
+        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+      ).join(' ')
+
+      window.appLogs.push({ timestamp, level, message })
+
+      // Keep only the last 100 logs to prevent memory issues
+      if (window.appLogs.length > 100) {
+        window.appLogs = window.appLogs.slice(-100)
+      }
+    },
+
+    handleUnloadLogs () {
+      try {
+        if (window.appLogs && window.appLogs.length > 0) {
+          const logsToSend = window.appLogs.map(entry =>
+            `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}`
+          ).join('\n')
+
+          // Send logs to server
+          const formData = new FormData()
+          formData.append('logs', logsToSend)
+          formData.append('page', window.location.pathname)
+          formData.append('timestamp', new Date().toISOString())
+
+          // Use sendBeacon as it's more reliable during page unload
+          navigator.sendBeacon(this.$server_url + 'client_logs', formData)
+
+          // Also log to console for debugging
+          window.originalConsole.log('Sending logs before unload:', logsToSend)
+        }
+      } catch (e) {
+        window.originalConsole.error('Error in handleUnloadLogs:', e)
+      }
+    },
     confirmEarlyExit () {
       this.showEarlyExitModal = true
     },
@@ -81,26 +137,27 @@ export default {
         const subjectId = this.terminationSubjectId
         const serverUrl = this.$server_url
 
-        // Try multiple methods to ensure the termination request gets through
-
         // 1. First try: sendBeacon (most reliable for page unload)
         try {
+          console.log('Attempting sendBeacon...')
           const url = new URL('terminate_participation', serverUrl).toString()
           const formData = new FormData()
           formData.append('subject_id', subjectId)
           const beaconSent = navigator.sendBeacon(url, formData)
-          console.log('Termination request sent via sendBeacon, success:', beaconSent)
+          console.log('sendBeacon result - success:', beaconSent, 'url:', url, 'method: POST (FormData)')
         } catch (e) {
           console.error('Error with sendBeacon:', e)
         }
 
         // 2. Second try: iframe form submission (works when sendBeacon is blocked)
         try {
+          console.log('Attempting iframe form submission...')
           const iframe = document.getElementById('termination-frame')
           if (iframe && iframe.contentWindow) {
             const form = document.createElement('form')
             form.method = 'POST'
-            form.action = new URL('terminate_participation', serverUrl).toString()
+            const actionUrl = new URL('terminate_participation', serverUrl).toString()
+            form.action = actionUrl
 
             const input = document.createElement('input')
             input.type = 'hidden'
@@ -110,35 +167,154 @@ export default {
             form.appendChild(input)
             iframe.contentDocument.body.appendChild(form)
             form.submit()
-            console.log('Termination request sent via iframe form')
+            console.log('iframe form submitted - method: POST, url:', actionUrl)
+          } else {
+            console.log('Iframe not available for form submission')
           }
         } catch (e) {
           console.error('Error with iframe form method:', e)
         }
 
-        // 3. Third try: Image beacon (works in most browsers)
+        // 3. Third try: Hidden form submission (replaces image beacon)
         try {
-          const img = new Image()
-          const url = new URL('terminate_participation', serverUrl)
-          url.searchParams.append('subject_id', subjectId)
-          url.searchParams.append('_', Date.now())
-          img.src = url.toString()
-          console.log('Termination request sent via image beacon')
+          console.log('Attempting hidden form submission...')
+          const form = document.createElement('form')
+          form.method = 'POST'
+          form.action = new URL('terminate_participation', serverUrl).toString()
+
+          const input = document.createElement('input')
+          input.type = 'hidden'
+          input.name = 'subject_id'
+          input.value = subjectId
+          form.appendChild(input)
+
+          // Create a hidden iframe to handle the form submission
+          const iframe = document.createElement('iframe')
+          iframe.name = 'post-iframe-' + Date.now()
+          iframe.style.display = 'none'
+          form.target = iframe.name
+
+          // Add to document and submit
+          document.body.appendChild(iframe)
+          document.body.appendChild(form)
+          form.submit()
+
+          // Clean up after a short delay
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe)
+            }
+            if (document.body.contains(form)) {
+              document.body.removeChild(form)
+            }
+          }, 1000)
+
+          console.log('Hidden form submitted - method: POST, url:', form.action)
         } catch (e) {
-          console.error('Error with image beacon:', e)
+          console.error('Error with hidden form submission:', e)
         }
 
-        // 4. Last resort: sync XHR (might be blocked by some browsers)
+        // 4. Last resort: fetch with keepalive (works in modern browsers)
         try {
-          const xhr = new XMLHttpRequest()
           const url = new URL('terminate_participation', serverUrl).toString()
           const formData = new FormData()
           formData.append('subject_id', subjectId)
-          xhr.open('POST', url, false) // Synchronous
-          xhr.send(formData)
-          console.log('Sync XHR termination request sent with status:', xhr.status)
+
+          const requestId = 'req_' + Date.now()
+          const startTime = performance.now()
+          const logData = {
+            requestId,
+            url,
+            method: 'POST',
+            timestamp: new Date().toISOString(),
+            subjectId,
+            status: 'attempting',
+            startTime: startTime
+          }
+
+          // Log the attempt
+          console.log(`[${requestId}] Attempting fetch with keepalive...`, logData)
+
+          // Send initial log to server
+          this.logToServer({
+            type: 'keepalive_attempt',
+            ...logData
+          })
+
+          // Use fetch with keepalive for better reliability during page unload
+          fetch(url, {
+            method: 'POST',
+            body: formData,
+            keepalive: true,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-Request-ID': requestId
+            }
+          }).then(async response => {
+            const responseTime = Math.round(performance.now() - startTime)
+            const responseData = await response.text()
+            const success = response.ok
+            const status = response.status
+
+            // Prepare success/error data
+            const resultData = {
+              ...logData,
+              status: success ? 'success' : 'error',
+              responseTime: `${responseTime}ms`,
+              httpStatus: status,
+              response: responseData,
+              timestamp: new Date().toISOString()
+            }
+
+            // Log to console
+            if (success) {
+              console.log(`[${requestId}] Fetch with keepalive succeeded`, resultData)
+            } else {
+              console.error(`[${requestId}] Fetch with keepalive failed with status ${status}`, resultData)
+            }
+
+            // Send result to server
+            this.logToServer({
+              type: success ? 'keepalive_success' : 'keepalive_error',
+              ...resultData
+            })
+
+            if (!success) {
+              throw new Error(`HTTP error! status: ${status}`)
+            }
+            return responseData
+          }).catch(e => {
+            const errorTime = Math.round(performance.now() - startTime)
+            const errorData = {
+              ...logData,
+              status: 'error',
+              error: e.toString(),
+              stack: e.stack,
+              responseTime: `${errorTime}ms`,
+              timestamp: new Date().toISOString()
+            }
+            console.error(`[${requestId}] Fetch with keepalive failed after ${errorTime}ms`, errorData)
+
+            // Send error to server
+            this.logToServer({
+              type: 'keepalive_error',
+              ...errorData
+            })
+          })
         } catch (e) {
-          console.error('Error with sync XHR:', e)
+          const errorData = {
+            error: e.toString(),
+            stack: e.stack,
+            timestamp: new Date().toISOString(),
+            status: 'setup_error'
+          }
+          console.error('Error in fetch keepalive setup:', errorData)
+
+          // Send setup error to server
+          this.logToServer({
+            type: 'keepalive_setup_error',
+            ...errorData
+          })
         }
       }
     },
@@ -167,8 +343,42 @@ export default {
     }
   },
   mounted () {
+    // Store original console methods
+    if (!window.originalConsole) {
+      window.originalConsole = {
+        log: console.log,
+        error: console.error,
+        warn: console.warn,
+        info: console.info
+      }
+
+      // Override console methods to store logs
+      console.log = (...args) => {
+        this.storeLog('log', ...args)
+        window.originalConsole.log(...args)
+      }
+      console.error = (...args) => {
+        this.storeLog('error', ...args)
+        window.originalConsole.error(...args)
+      }
+      console.warn = (...args) => {
+        this.storeLog('warn', ...args)
+        window.originalConsole.warn(...args)
+      }
+      console.info = (...args) => {
+        this.storeLog('info', ...args)
+        window.originalConsole.info(...args)
+      }
+    }
+
+    // Initialize logs array if it doesn't exist
+    if (!window.appLogs) {
+      window.appLogs = []
+    }
+
     this.setupNavigationGuards()
     window.addEventListener('beforeunload', this.handleBeforeUnload)
+    window.addEventListener('unload', this.handleUnloadLogs)
     window.addEventListener('unload', this.handleUnload)
     // Add pagehide event for mobile browsers
     window.addEventListener('pagehide', this.handlePageHide)

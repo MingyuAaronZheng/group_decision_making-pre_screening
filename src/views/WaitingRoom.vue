@@ -250,63 +250,142 @@ export default {
 
       // 1. First try: sendBeacon (most reliable for page unload)
       try {
+        console.log('Attempting sendBeacon for set-not-ready...')
         const url = new URL(endpoint, serverUrl).toString()
         const formData = new FormData()
         formData.append('subject_id', subjectIdStr)
         const beaconSent = navigator.sendBeacon(url, formData)
-        console.log('Not-ready request sent via sendBeacon, success:', beaconSent)
+        console.log('sendBeacon result for set-not-ready - success:', beaconSent, 'url:', url, 'method: POST (FormData)')
       } catch (e) {
-        console.error('Error with sendBeacon:', e)
+        console.error('Error with sendBeacon for set-not-ready:', e)
       }
 
-      // 2. Second try: iframe with form submission (POST request)
+      // 2. Second try: iframe form submission (works when sendBeacon is blocked)
       try {
+        console.log('Attempting iframe form submission for set-not-ready...')
         const iframe = document.getElementById('termination-frame')
         if (iframe && iframe.contentWindow) {
           const form = document.createElement('form')
           form.method = 'POST'
-          form.action = new URL(endpoint, serverUrl).toString()
+          const actionUrl = new URL(endpoint, serverUrl).toString()
+          form.action = actionUrl
 
-          const subjectIdInput = document.createElement('input')
-          subjectIdInput.type = 'hidden'
-          subjectIdInput.name = 'subject_id'
-          subjectIdInput.value = subjectIdStr
+          const input = document.createElement('input')
+          input.type = 'hidden'
+          input.name = 'subject_id'
+          input.value = subjectIdStr
 
-          form.appendChild(subjectIdInput)
-          document.body.appendChild(form)
+          form.appendChild(input)
+          iframe.contentDocument.body.appendChild(form)
           form.submit()
-          document.body.removeChild(form)
-
-          console.log('Not-ready request sent via iframe form')
+          console.log('iframe form submitted for set-not-ready - method: POST, url:', actionUrl)
+        } else {
+          console.log('Iframe not available for form submission')
         }
       } catch (e) {
-        console.error('Error with iframe form method:', e)
+        console.error('Error with iframe form method for set-not-ready:', e)
       }
 
-      // 3. Third try: Image beacon (works in most browsers)
+      // 3. Third try: Hidden form submission (replaces image beacon)
       try {
-        const img = new Image()
-        const url = new URL(endpoint, serverUrl)
-        url.searchParams.append('subject_id', subjectIdStr)
-        // Add timestamp to prevent caching
-        url.searchParams.append('_', Date.now())
-        img.src = url.toString()
-        console.log('Not-ready request sent via image beacon')
+        console.log('Attempting hidden form submission for set-not-ready...')
+        const form = document.createElement('form')
+        form.method = 'POST'
+        form.action = new URL(endpoint, serverUrl).toString()
+
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = 'subject_id'
+        input.value = subjectIdStr
+        form.appendChild(input)
+
+        // Create a hidden iframe to handle the form submission
+        const iframe = document.createElement('iframe')
+        iframe.name = 'post-iframe-' + Date.now()
+        iframe.style.display = 'none'
+        form.target = iframe.name
+
+        // Add to document and submit
+        document.body.appendChild(iframe)
+        document.body.appendChild(form)
+        form.submit()
+
+        // Clean up after a short delay
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe)
+          }
+          if (document.body.contains(form)) {
+            document.body.removeChild(form)
+          }
+        }, 1000)
+
+        console.log('Hidden form submitted for set-not-ready - method: POST, url:', form.action)
       } catch (e) {
-        console.error('Error with image beacon:', e)
+        console.error('Error with hidden form submission for set-not-ready:', e)
       }
 
-      // 4. Last resort: sync XHR (might be blocked by some browsers)
+      // 4. Last resort: fetch with keepalive (works in modern browsers)
       try {
-        const xhr = new XMLHttpRequest()
         const url = new URL(endpoint, serverUrl).toString()
         const formData = new FormData()
         formData.append('subject_id', subjectIdStr)
-        xhr.open('POST', url, false) // Synchronous
-        xhr.send(formData)
-        console.log('Sync XHR not-ready request sent with status:', xhr.status)
+
+        const requestId = 'req_' + Date.now()
+        const startTime = performance.now()
+
+        console.log(`[${requestId}] Attempting fetch with keepalive for set-not-ready...`, {
+          url,
+          method: 'POST',
+          timestamp: new Date().toISOString(),
+          subjectId: subjectIdStr
+        })
+
+        // Use fetch with keepalive for better reliability during page unload
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          keepalive: true,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-Request-ID': requestId
+          }
+        }).then(async response => {
+          const responseTime = Math.round(performance.now() - startTime)
+          const responseData = await response.text()
+
+          if (!response.ok) {
+            console.error(`[${requestId}] Fetch with keepalive for set-not-ready completed with error`, {
+              status: response.status,
+              statusText: response.statusText,
+              response: responseData,
+              responseTime: `${responseTime}ms`,
+              url
+            })
+            throw new Error(`HTTP error! status: ${response.status}`)
+          }
+
+          console.log(`[${requestId}] Fetch with keepalive for set-not-ready succeeded`, {
+            status: response.status,
+            response: responseData,
+            responseTime: `${responseTime}ms`,
+            url
+          })
+          return responseData
+        }).catch(e => {
+          const errorTime = Math.round(performance.now() - startTime)
+          console.error(`[${requestId}] Fetch with keepalive for set-not-ready failed after ${errorTime}ms`, {
+            error: e.toString(),
+            url,
+            stack: e.stack
+          })
+        })
       } catch (e) {
-        console.error('Error with sync XHR:', e)
+        console.error('Error in fetch keepalive setup for set-not-ready:', {
+          error: e.toString(),
+          stack: e.stack,
+          timestamp: new Date().toISOString()
+        })
       }
     },
 
