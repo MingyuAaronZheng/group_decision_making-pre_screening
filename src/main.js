@@ -98,10 +98,10 @@ const store = new Vuex.Store({
       masterStatements: [
         'Abortion should be legal.',
         'Governments should have the authority to censor online content.',
-        'The government should employ a stricter immigration/border policy.',
         'Tariffs on imported goods protect American jobs and industries from foreign competition.',
-        'The government should cut taxes for the wealthy.',
-        'Unpredictability in U.S. foreign policy is an effective deterrent against hostile actions from other nations.'
+        'Unpredictability in U.S. foreign policy is an effective deterrent against hostile actions from other nations.',
+        'The United States should implement a digital dollar system.',
+        'Automation will crash democracy.'
       ], // Store master statements
       chat_statement_index: null,
       chat_statement: null,
