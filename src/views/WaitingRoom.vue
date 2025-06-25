@@ -30,6 +30,16 @@
       <p v-if="isPairing"><b>Finding a suitable group...</b></p>
       <p v-else-if="pairingFailed" class="text-danger"><b>Pairing failed. Redirecting...</b></p>
       <p v-else-if="!has_capacity" class="text-success"><b>Pairing successful! Redirecting...</b></p>
+
+      <!-- Test button for debugging unload behavior -->
+      <b-button
+        v-if="!isProduction"
+        @click="testUnloadHandler"
+        variant="outline-danger"
+        size="sm"
+        class="mt-3">
+        Test Unload Handler
+      </b-button>
     </div>
 
     <b-spinner v-if="isPairing" label="Loading..."></b-spinner>
@@ -64,7 +74,8 @@ export default {
       has_capacity: false,
       memberLeftToastId: null,
       isNavigating: false,
-      shouldTerminate: false
+      shouldTerminate: false,
+      isProduction: this.$store.state.test === 'N' // Hide test button in production
     }
   },
   computed: {
@@ -75,6 +86,28 @@ export default {
     }
   },
   methods: {
+    // Test method to simulate unload behavior
+    async testUnloadHandler () {
+      console.log('Testing unload handler...')
+      try {
+        // Show a toast notification
+        this.$bvToast.toast('Testing unload handler. Check console for details.', {
+          title: 'Test Mode',
+          variant: 'info',
+          solid: true,
+          autoHideDelay: 5000
+        })
+
+        // Call the same method that's called during unload
+        await this.sendNotReady()
+
+        // Log success
+        console.log('Test unload handler completed successfully')
+      } catch (error) {
+        console.error('Error in testUnloadHandler:', error)
+      }
+    },
+
     proceedToNextSurvey (toastId) {
       // Hide the notification
       if (toastId) {
