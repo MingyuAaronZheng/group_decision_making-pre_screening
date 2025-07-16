@@ -17,13 +17,25 @@
         <p>Please provide a reason for termination (optional):</p>
         <b-form-checkbox-group v-model="reasons" :options="reasonOptions" />
         <b-form-input v-model="otherReason" placeholder="Other reason" />
+        <div class="feedback-area">
+          <h5>Optional: Share any feedback about your experience (optional)</h5>
+          <b-form-textarea
+            v-model="feedback"
+            placeholder="Your feedback (optional)"
+            rows="4"
+            max-rows="8"
+            class="mb-3"
+          />
+        </div>
         <p>Please push the button below to redirect to prolific.</p>
         <b-button
           variant="primary"
           @click="submit"
+          :disabled="submitting"
         >
-          Redirect to Prolific
+          {{ submitting ? 'Submitting...' : 'Redirect to Prolific' }}
         </b-button>
+        <b-alert v-if="feedbackSubmitted" variant="info" class="mt-3">Thank you for your feedback!</b-alert>
       </div>
     </div>
   </b-jumbotron>
@@ -42,11 +54,28 @@ export default {
         { text: 'Technical issues', value: 'technical_issues' },
         { text: 'Difficulty understanding the task', value: 'difficulty_understanding' },
         { text: 'Other', value: 'other' }
-      ]
+      ],
+      feedback: '',
+      feedbackSubmitted: false,
+      submitting: false
     }
   },
   methods: {
-    submit: function (event) {
+    async submit (event) {
+      this.submitting = true
+      // Submit feedback if provided
+      if (this.feedback && this.feedback.trim().length > 0) {
+        try {
+          const feedbackBody = new FormData()
+          feedbackBody.append('subject_id', this.$store.state.subject_id)
+          feedbackBody.append('feedback_text', this.feedback)
+          await axios.post(this.$server_url + 'submit_feedback', feedbackBody)
+          this.feedbackSubmitted = true
+        } catch (e) {
+          // Feedback is optional, so just log error
+          console.error('Feedback submission failed', e)
+        }
+      }
       let body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
       body.append('status', 'go_back_terminate')
@@ -63,6 +92,7 @@ export default {
         .catch(e => {
           alert('Some error happened!! Please leave comments and submit the study on Prolific.' + e)
         })
+        .finally(() => { this.submitting = false })
     }
   },
   created () {
@@ -87,5 +117,8 @@ export default {
 }
 .alert {
   text-align: left;
+}
+.feedback-area {
+  margin: 32px 0 16px 0;
 }
 </style>

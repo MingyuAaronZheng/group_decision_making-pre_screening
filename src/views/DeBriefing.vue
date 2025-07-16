@@ -9,10 +9,25 @@
       <li><strong>Local Services</strong> – Contact your primary care physician or local health department for referrals in your area.</li>
     </ul>
     <p>Your well-being matters to us. Don’t hesitate to reach out if you need assistance.</p>
+
+    <div class="feedback-area">
+      <h5>Optional: Share any feedback about your experience (optional)</h5>
+      <b-form-textarea
+        v-model="feedback"
+        placeholder="Your feedback (optional)"
+        rows="4"
+        max-rows="8"
+        class="mb-3"
+      />
+    </div>
+
     <div class="button-area">
       <h5>Please push the button below to submit the study!</h5>
-      <b-button variant="primary" name="next" v-on:click="submit">Submit Study</b-button>
+      <b-button variant="primary" name="next" v-on:click="submit" :disabled="submitting">
+        {{ submitting ? 'Submitting...' : 'Submit Study' }}
+      </b-button>
     </div>
+    <b-alert v-if="feedbackSubmitted" variant="success" class="mt-3">Thank you for your feedback!</b-alert>
   </div>
 </template>
 
@@ -20,8 +35,30 @@
 import axios from 'axios'
 export default {
   name: 'DeBriefing',
+  data () {
+    return {
+      feedback: '',
+      feedbackSubmitted: false,
+      submitting: false
+    }
+  },
   methods: {
-    submit (event) {
+    async submit (event) {
+      this.submitting = true
+      // Submit feedback if provided
+      if (this.feedback && this.feedback.trim().length > 0) {
+        try {
+          const feedbackBody = new FormData()
+          feedbackBody.append('subject_id', this.$store.state.subject_id)
+          feedbackBody.append('feedback_text', this.feedback)
+          await axios.post(this.$server_url + 'submit_feedback', feedbackBody)
+          this.feedbackSubmitted = true
+        } catch (e) {
+          // Feedback is optional, so just log error
+          console.error('Feedback submission failed', e)
+        }
+      }
+      // Continue with Prolific submission
       const body = new FormData()
       body.append('subject_id', this.$store.state.subject_id)
       body.append('status', 'success')
@@ -34,6 +71,7 @@ export default {
           }
         })
         .catch(e => { alert('Some error happened! Please submit the HIT on Prolific manually.' + e) })
+        .finally(() => { this.submitting = false })
     }
   }
 }
@@ -69,5 +107,8 @@ export default {
 }
 .debriefing a:hover {
   text-decoration: underline;
+}
+.feedback-area {
+  margin: 32px 0 16px 0;
 }
 </style>

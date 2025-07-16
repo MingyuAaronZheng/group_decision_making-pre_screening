@@ -493,26 +493,22 @@ new Vue({
       } else if (message.code === 203) { // Typing notification
         const typingInfo = message.typing_info
         // Skip if it's the current user's typing notification
+        if (typingInfo.subject_id > 0) {
+          console.log('Typing notification from human:', typingInfo.avatar_name, typingInfo.avatar_color, typingInfo.is_typing)
+        }
         if (typingInfo.subject_id === this.$store.state.subject_id) {
           return
         }
-        if (typingInfo.is_typing) {
-          // Dispatch custom event for typing notification
-          const typingEvent = new CustomEvent('user-typing', {
-            detail: {
-              subject_id: typingInfo.subject_id,
-              avatar_name: typingInfo.avatar_name,
-              avatar_color: typingInfo.avatar_color
-            }
-          })
-          window.dispatchEvent(typingEvent)
-        } else {
-          // Dispatch event to stop typing notification
-          const stoppedTypingEvent = new CustomEvent('user-stopped-typing', {
-            detail: { subject_id: typingInfo.subject_id }
-          })
-          window.dispatchEvent(stoppedTypingEvent)
-        }
+        // Always dispatch 'user-typing' event, with is_typing true or false
+        const typingEvent = new CustomEvent('user-typing', {
+          detail: {
+            subject_id: typingInfo.subject_id,
+            avatar_name: typingInfo.avatar_name,
+            avatar_color: typingInfo.avatar_color,
+            is_typing: typingInfo.is_typing
+          }
+        })
+        window.dispatchEvent(typingEvent)
       } else if (message.code === 903) { // Ready to end status update
         // Update ready status for members
         const readyMembers = message.ready_members

@@ -423,6 +423,7 @@ export default {
       }
 
       this.$root.sendWebSocketMessage(data)
+      console.log('human typing notifyTyping called with:', data)
     },
     handleReadyToEnd () {
       this.isReadyToEnd = true
@@ -453,16 +454,39 @@ export default {
       // Redirect to a timeout page
       this.$router.push('/InactivityTerminatedParticipation')
     },
+    handleTypingEvent (event) {
+      console.log('user-typing event received:', event.detail)
+      this.handleTyping(event.detail)
+    },
     handleTyping (user) {
-      // Store the typing user
-      this.typingNotification = user
+      console.log('handleTyping called with:', user)
 
-      // Clear any existing timeout
+      // Handle both typing and stopped typing for AI
+      if (user.subject_id < 0) {
+        console.log('AI typing detected before is_typing:', user)
+        if (user.is_typing) {
+          this.typingNotification = user
+          console.log('AI typing detected after is_typing:', user)
+          console.log('isAITyping:', this.isAITyping)
+          console.log('typingNotification:', this.typingNotification)
+          console.log('typingNotification.subject_id < 0:', this.typingNotification && this.typingNotification.subject_id < 0)
+        } else {
+          // Only clear if this is the same AI
+          if (this.typingNotification && this.typingNotification.subject_id === user.subject_id) {
+            this.typingNotification = null
+          }
+        }
+        return
+      }
+
+      // Human typing logic: show and auto-clear after 3 seconds
+      if (user.subject_id > 0 && user.is_typing) {
+        this.typingNotification = user
+      }
+
       if (this.typingNotificationTimeout) {
         clearTimeout(this.typingNotificationTimeout)
       }
-
-      // Set a timeout to clear the notification
       this.typingNotificationTimeout = setTimeout(() => {
         this.typingNotification = null
       }, 3000) // Show typing indicator for 3 seconds
@@ -678,8 +702,9 @@ export default {
       .catch(e => { console.error('load prompt', e) })
 
     // Listen for typing events
-    window.addEventListener('user-typing', (event) => this.handleTyping(event.detail))
-    window.addEventListener('user-stopped-typing', () => { this.typingNotification = null })
+    window.addEventListener('user-typing', this.handleTypingEvent)
+    // Remove this conflicting listener - all typing logic is in handleTyping now
+    // window.addEventListener('user-stopped-typing', () => { this.typingNotification = null })
 
     // Existing mounted code...
     this.updateChatStatus()
@@ -696,8 +721,9 @@ export default {
     // Clean up event listeners
     window.removeEventListener('show-inactivity-warning', this.showInactivityWarning)
     window.removeEventListener('remove-inactive-user', this.handleInactiveUser)
-    window.removeEventListener('user-typing', (event) => this.handleTyping(event.detail))
-    window.removeEventListener('user-stopped-typing', () => { this.typingNotification = null })
+    window.removeEventListener('user-typing', this.handleTypingEvent)
+    // Remove this conflicting listener - all typing logic is in handleTyping now
+    // window.removeEventListener('user-stopped-typing', () => { this.typingNotification = null })
     if (this.$el) {
       this.$el.removeEventListener('click', this.bumpActivityOnClick)
     }

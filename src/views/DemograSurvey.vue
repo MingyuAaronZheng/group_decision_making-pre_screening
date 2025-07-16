@@ -679,6 +679,7 @@ export default {
       if (this.currentStep === 1) {
         if (!this.validateStep1()) return
         this.currentStep = 2
+        window.scrollTo(0, 0)
         return
       }
       if (!this.validateStep2()) return
