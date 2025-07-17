@@ -357,11 +357,10 @@ export default {
           console.error('Error updating chat status:', error)
         })
     },
-    deactivateChatStatus () {
+    finishChat () {
       const formData = new FormData()
-      formData.append('group_id', this.$store.state.group_id)
-      formData.append('chatting', false)
-      axios.post(this.$server_url + 'update_chat_status', formData)
+      formData.append('subject_id', this.$store.state.subject_id)
+      axios.post(this.$server_url + 'finish_chat', formData)
         .then(response => {
           console.log('Chat status deactivated:', response.data)
         })
@@ -731,8 +730,8 @@ export default {
       clearTimeout(this.typingNotificationTimeout)
     }
 
-    // Deactivate chat status
-    this.deactivateChatStatus()
+    // Deactivate chat status of group
+    this.finishChat()
     // Optionally, send a WebSocket message to inform the server
     let leave_room = {
       'code': 130,
