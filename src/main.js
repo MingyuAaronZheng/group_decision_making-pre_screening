@@ -297,6 +297,9 @@ const store = new Vuex.Store({
           commit('setWebSocketConnected', false)
         }
       })
+    },
+    recordActivity ({ commit }) {
+      commit('updateLastActivity')
     }
   },
   getters: {

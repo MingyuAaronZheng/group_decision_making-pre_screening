@@ -199,6 +199,7 @@
 import { colors } from '@/components/constants'
 import axios from 'axios'
 import { notifyInactivity } from '@/plugins/notificationService.js'
+import MemberLeftToast from '@/components/MemberLeftToast.vue'
 
 const CUSTOM_FILLER_WORDS = new Set([
   'um', 'uh', 'er', 'ah', 'like', 'okay', 'right', 'you know', 'i mean',
@@ -206,6 +207,9 @@ const CUSTOM_FILLER_WORDS = new Set([
 ])
 
 export default {
+  components: {
+    MemberLeftToast // eslint-disable-line vue/no-unused-components
+  },
   data () {
     return {
       send_out_message: '',
@@ -517,47 +521,38 @@ export default {
     },
     showMemberLeftNotification (message = 'Due to certain reasons, a group member has left the chat. However, the study will continue. Please click the button to proceed to the next survey.') {
       console.log('Showing member left notification with message:', message)
+
       // Create a unique ID for this toast
       const toastId = `member-left-${Date.now()}`
       this.memberLeftToastId = toastId
 
-      // Create a simple toast with just the message first
-      this.$bvToast.toast(message, {
-        id: toastId,
-        title: 'Member Left',
-        variant: 'warning',
-        solid: true,
-        noAutoHide: true,
-        noCloseButton: true,
-        noHoverPause: true
-      })
+      // Hide any existing member left toasts
+      if (this.memberLeftToastId && this.memberLeftToastId !== toastId) {
+        this.$bvToast.hide(this.memberLeftToastId)
+      }
 
-      // After a short delay, find the toast and add our button
-      setTimeout(() => {
-        // Hide any existing member left toasts
-        if (this.memberLeftToastId && this.memberLeftToastId !== toastId) {
-          this.$bvToast.hide(this.memberLeftToastId)
-        }
-
-        // Find the toast element
-        const toastElement = document.getElementById(toastId)
-        if (toastElement) {
-          // Create the button
-          const button = document.createElement('button')
-          button.className = 'btn btn-primary btn-sm mt-2'
-          button.textContent = 'Proceed to Next Survey'
-          button.onclick = () => this.proceedToNextSurvey(toastId)
-
-          // Find the toast body and append the button
-          const toastBody = toastElement.querySelector('.toast-body')
-          if (toastBody) {
-            toastBody.appendChild(button)
+      // Create the toast using the Vue component
+      const h = this.$createElement
+      this.$bvToast.toast(
+        h(MemberLeftToast, {
+          props: {
+            message: message,
+            onProceed: () => this.proceedToNextSurvey(toastId)
           }
+        }),
+        {
+          id: toastId,
+          title: 'Member Left',
+          variant: 'warning',
+          solid: true,
+          noAutoHide: true,
+          noCloseButton: true,
+          noHoverPause: true,
+          toaster: 'b-toaster-top-center'
         }
+      )
 
-        console.log('Member left notification shown with ID:', toastId)
-      }, 100) // Small delay to ensure toast is in the DOM
-
+      console.log('Member left notification shown with ID:', toastId)
       return toastId
     }
   },
