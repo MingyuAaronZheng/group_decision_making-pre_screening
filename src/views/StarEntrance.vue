@@ -1,27 +1,10 @@
 <template>
   <div class="star-entrance-bg">
-    <b-jumbotron header="Welcome to our group discussion study!" header-level="4" class="mb-4 shadow-lg entrance-jumbotron">
-      <div class="page-indicator text-center mb-1">Page: 1 / 10</div>
+    <b-jumbotron header="Welcome to a brief background survey!" header-level="4" class="mb-4 shadow-lg entrance-jumbotron">
+      <div class="page-indicator text-center mb-1">Page: 1 / 3</div>
       <div class="content-area bg-white p-4 rounded-lg entrance-content">
         <p class="entrance-section-title">
-          In this study, you will be asked to complete a series of tasks, including:
-        </p>
-        <b-list-group class="mb-4 entrance-step-list">
-          <b-list-group-item class="px-3 py-3 mb-3 bg-light border-0 rounded-lg d-flex align-items-center entrance-step">
-            <b-icon icon="1-circle" variant="primary" class="mr-3 entrance-step-icon" />
-            <span>Sharing your attitudes and perspectives on specific topics.</span>
-          </b-list-group-item>
-          <b-list-group-item class="px-3 py-3 mb-3 bg-light border-0 rounded-lg d-flex align-items-center entrance-step">
-            <b-icon icon="2-circle" variant="success" class="mr-3 entrance-step-icon" />
-            <span>Participating in a discussion task using a customized chat interface.</span>
-          </b-list-group-item>
-          <b-list-group-item class="px-3 py-3 mb-3 bg-light border-0 rounded-lg d-flex align-items-center entrance-step">
-            <b-icon icon="3-circle" variant="warning" class="mr-3 entrance-step-icon" />
-            <span>Reflecting on your experience and providing feedback in a post-discussion survey.</span>
-          </b-list-group-item>
-        </b-list-group>
-        <p class="entrance-section-title">
-          The entire process is expected to take approximately <b>20–25 minutes</b>. Your responses will remain confidential and will be used exclusively for research purposes to ensure the integrity and impact of the findings.
+          This short survey is designed to understand your experience with and perception of artificial intelligence. It will take a few minutes to complete.
           <br>
           <span class="text-info entrance-section-subline">You may take part in this study only once.</span>
         </p>
@@ -31,20 +14,18 @@
             <span class="h5 entrance-alert-title">Important Inactivity Rule:</span><br>
             If you are inactive for <strong>45 seconds</strong>, you will see a warning. If inactivity continues for another <strong>30 seconds</strong> (total <strong>75 seconds</strong>), your study will be terminated.<br>
             <ul class="mb-0">
-              <li class="text-dark">Even if you are terminated, you will still be paid for the tasks you have completed up to that point.</li>
               <li class="text-dark">To stay active, interact with the website, such as clicking on option buttons of the surveys, entering text in input boxes.</li>
             </ul>
           </div>
         </b-alert>
         <p class="entrance-section-title mb-4">
           <b-icon icon="arrow-right-circle" class="mr-2 text-primary" />
-          Sounds interesting? Click the button below to start the study!
+          Click the button below to start the survey!
         </p>
         <div class="button-area text-center mt-4">
-          <b-button variant="primary" name="next" v-on:click="next" class="entrance-btn shadow-sm">Start the Study</b-button>
+          <b-button variant="primary" name="next" v-on:click="next" class="entrance-btn shadow-sm">Start the Survey</b-button>
         </div>
       </div>
-
     </b-jumbotron>
   </div>
 </template>

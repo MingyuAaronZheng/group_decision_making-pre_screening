@@ -5,8 +5,6 @@ import VueSimpleAlert from 'vue-simple-alert'
 import StarEntrance from '../views/StarEntrance.vue'
 /** Common pages **/
 /** Common pages - Instructions**/
-import DiscussionInstructions from '../views/DiscussionInstructions.vue'
-import WaitingRoom from '../views/WaitingRoom.vue'
 /** Common pages - Exit pages**/
 import EarlyExit from '../views/errors/EarlyExit.vue'
 /** Errors **/
@@ -14,12 +12,7 @@ import FailPairing from '../views/errors/FailPairing.vue'
 import FailAttention from '../views/errors/FailAttention.vue'
 /** Without AI **/
 
-import PreDSurvey from '@/views/PreDSurvey.vue'
-import PostDOSurvey from '@/views/PostDOSurvey.vue'
-import PostDFSurvey from '@/views/PostDFSurvey.vue'
 import DemograSurvey from '@/views/DemograSurvey.vue'
-import ChatRoom from '@/views/ChatRoom.vue'
-import AvatarAssignment from '@/views/avatar-assignment.vue'
 import DeBriefing from '@/views/DeBriefing.vue'
 import GoBackTerminatedParticipation from '@/views/errors/GoBackTerminatedParticipation.vue'
 import InactivityTerminatedParticipation from '@/views/errors/InactivityTerminatedParticipation.vue'
@@ -31,13 +24,7 @@ Vue.use(VueSimpleAlert)
 const pageOrder = [
   'StarEntrance',
   'DemograSurvey',
-  'PreDSurvey',
-  'DiscussionInstructions',
-  'WaitingRoom',
-  'AvatarAssignment',
-  'ChatRoom',
-  'PostDOSurvey',
-  'PostDFSurvey'
+  'DeBriefing'
 ]
 
 const routes = [
@@ -54,11 +41,6 @@ const routes = [
     path: '/StarEntrance',
     name: 'StarEntrance',
     component: StarEntrance
-  },
-  {
-    path: '/PreDSurvey',
-    name: 'PreDSurvey',
-    component: PreDSurvey
   },
   {
     path: '/FailPairing',
@@ -81,47 +63,12 @@ const routes = [
     component: InactivityTerminatedParticipation
   },
   {
-    path: '/PreDSurvey',
-    name: 'PreDSurvey',
-    component: PreDSurvey
-  },
-  {
-    path: '/PostDOSurvey',
-    name: 'PostDOSurvey',
-    component: PostDOSurvey
-  },
-  {
-    path: '/PostDFSurvey',
-    name: 'PostDFSurvey',
-    component: PostDFSurvey
-  },
-  {
     path: '/DemograSurvey',
     name: 'DemograSurvey',
     component: DemograSurvey
   },
   {
-    path: '/ChatRoom',
-    name: 'ChatRoom',
-    component: ChatRoom
-  },
-  {
-    path: '/DiscussionInstructions',
-    name: 'DiscussionInstructions',
-    component: DiscussionInstructions
-  },
-  {
-    path: '/WaitingRoom',
-    name: 'WaitingRoom',
-    component: WaitingRoom
-  },
-  {
-    path: '/avatar-assignment',
-    name: 'AvatarAssignment',
-    component: AvatarAssignment
-  },
-  {
-    path: '/deBriefing',
+    path: '/DeBriefing',
     name: 'DeBriefing',
     component: DeBriefing
   }

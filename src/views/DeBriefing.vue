@@ -1,14 +1,12 @@
 <template>
   <div class="debriefing">
-    <div class="page-indicator text-center mb-1">Page: 10 / 10</div>
-    <h1>Debriefing</h1>
-    <p>Thank you for participating in the earlier group discussion. We understand that some topics may feel sensitive or polarizing.</p>
-    <p>If you ever need support, please explore these mental health resources:</p>
-    <ul>
-      <li><strong>CDC Mental Health Resources</strong> – Access <a href="https://www.cdc.gov/mental-health/caring/index.html#:~:text=Treatment%20and%20support&text=Visit%20findtreatment.gov%20%E2%80%93%20a%20confidential,Code%20to%20435748%20(HELP4U)" target="_blank" rel="noopener">cdc.gov/mental-health</a> for more information.</li>
-      <li><strong>Local Services</strong> – Contact your primary care physician or local health department for referrals in your area.</li>
-    </ul>
-    <p>Your well-being matters to us. Don’t hesitate to reach out if you need assistance.</p>
+    <div class="page-indicator text-center mb-1">Page: 3 / 3</div>
+    <h1>Survey Completion</h1>
+    <div class="completion-message">
+      <p>Thank you for completing the survey!</p>
+      <p>We look forward to your participation in the main study at 2:00 PM EST today.</p>
+      <p class="important-note">Please arrive on time — seats are limited, and late arrivals may miss the chance to earn the $3.50 payment.</p>
+    </div>
 
     <div class="feedback-area">
       <h5>Optional: Share any feedback about your experience (optional)</h5>
@@ -22,9 +20,9 @@
     </div>
 
     <div class="button-area">
-      <h5>Please push the button below to submit the study!</h5>
+      <h5>Please click the button below to complete the survey!</h5>
       <b-button variant="primary" name="next" v-on:click="submit" :disabled="submitting">
-        {{ submitting ? 'Submitting...' : 'Submit Study' }}
+        {{ submitting ? 'Submitting...' : 'Complete Survey' }}
       </b-button>
     </div>
     <b-alert v-if="feedbackSubmitted" variant="success" class="mt-3">Thank you for your feedback!</b-alert>
@@ -90,25 +88,35 @@ export default {
 .debriefing h1 {
   text-align: center;
   margin-bottom: 20px;
+  color: #2c3e50;
 }
-.debriefing p {
-  margin-bottom: 16px;
+.completion-message {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-.debriefing ul {
-  padding-left: 1.2em;
-  margin-bottom: 20px;
+.completion-message p {
+  margin-bottom: 12px;
+  font-size: 1.1em;
 }
-.debriefing li {
-  margin-bottom: 8px;
+.completion-message p:last-child {
+  margin-bottom: 0;
 }
-.debriefing a {
-  color: #1a0dab;
-  text-decoration: none;
-}
-.debriefing a:hover {
-  text-decoration: underline;
+.important-note {
+  color: #e65100;
+  font-weight: 500;
 }
 .feedback-area {
   margin: 32px 0 16px 0;
+}
+.button-area {
+  text-align: center;
+  margin-top: 24px;
+}
+.button-area h5 {
+  margin-bottom: 16px;
 }
 </style>
