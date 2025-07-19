@@ -1,39 +1,217 @@
 <template>
   <div class="star-entrance-bg">
     <b-jumbotron header="Welcome to a brief background survey!" header-level="4" class="mb-4 shadow-lg entrance-jumbotron">
-      <div class="page-indicator text-center mb-1">Page: 1 / 3</div>
       <div class="content-area bg-white p-4 rounded-lg entrance-content">
         <p class="entrance-section-title">
           This short survey is designed to understand your experience with and perception of artificial intelligence. It will take a few minutes to complete.
           <br>
           <span class="text-info entrance-section-subline">You may take part in this study only once.</span>
         </p>
-        <b-alert variant="warning" show class="my-4 p-4 font-weight-bold entrance-alert d-flex align-items-center shadow-sm">
-          <b-icon icon="info-circle-fill" font-scale="1.7" class="mr-3 text-info" />
-          <div class="entrance-alert-text">
-            <span class="h5 entrance-alert-title">Important Inactivity Rule:</span><br>
-            If you are inactive for <strong>45 seconds</strong>, you will see a warning. If inactivity continues for another <strong>30 seconds</strong> (total <strong>75 seconds</strong>), your study will be terminated.<br>
-            <ul class="mb-0">
-              <li class="text-dark">To stay active, interact with the website, such as clicking on option buttons of the surveys, entering text in input boxes.</li>
-            </ul>
-          </div>
-        </b-alert>
-        <p class="entrance-section-title mb-4">
-          <b-icon icon="arrow-right-circle" class="mr-2 text-primary" />
-          Click the button below to start the survey!
-        </p>
+
+        <!-- Survey Questions -->
+        <div class="survey-section mt-4">
+          <ol>
+            <li>
+              How often, if at all, have you used a generative AI tool (e.g., ChatGPT, Gemini, Claude) to create text?
+              <b-form-radio-group
+                v-model="aiToolUsageFrequency"
+                name="aiToolUsageFrequency"
+                buttons
+                button-variant="outline-black"
+                size="md"
+                class="agreement-options custom-radio-button"
+                @change="onFormInteraction"
+              >
+                <div class="agreement-wrapper">
+                  <div v-for="option in aiUsage" :key="option.value" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button" />
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </li>
+            <li>
+              What is your general attitude towards generative AI tools (e.g., ChatGPT, Gemini, Claude)?
+              <b-form-radio-group
+                v-model="aiAttitudeSelection"
+                name="aiAttitudeSelection"
+                buttons
+                button-variant="outline-black"
+                size="md"
+                class="agreement-options custom-radio-button"
+                @change="onFormInteraction"
+              >
+                <div class="agreement-wrapper">
+                  <div v-for="option in aiAttitude" :key="option.value" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button" />
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </li>
+            <li>
+              When playing music, which of the following do you think uses AI?
+              <b-form-radio-group
+                v-model="aiInMusic"
+                name="aiInMusic"
+                buttons
+                button-variant="outline-black"
+                size="md"
+                class="agreement-options custom-radio-button"
+                @change="onFormInteraction"
+              >
+                <div class="agreement-wrapper">
+                  <div v-for="option in aiMusic" :key="option.value" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button" />
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </li>
+            <li>
+              When using email, which of the following do you think uses AI?
+              <b-form-radio-group
+                v-model="aiInEmail"
+                name="aiInEmail"
+                buttons
+                button-variant="outline-black"
+                size="md"
+                class="agreement-options custom-radio-button"
+                @change="onFormInteraction"
+              >
+                <div class="agreement-wrapper">
+                  <div v-for="option in aiEmail" :key="option.value" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button" />
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </li>
+            <li>
+              Thinking about devices in the home, which of the following do you think uses AI?
+              <b-form-radio-group
+                v-model="aiInHomeDevices"
+                name="aiInHomeDevices"
+                buttons
+                button-variant="outline-black"
+                size="md"
+                class="agreement-options custom-radio-button"
+                @change="onFormInteraction"
+              >
+                <div class="agreement-wrapper">
+                  <div v-for="option in aiHome" :key="option.value" class="option-label-wrapper">
+                    <div class="option-label">{{ option.text }}</div>
+                    <b-form-radio :value="option.value" class="custom-radio-button" />
+                  </div>
+                </div>
+              </b-form-radio-group>
+            </li>
+            <li>
+              To what extent do you agree with the following statements regarding the mental capacities of an AI Chatbot?
+              <table class="table agreement-table">
+                <thead>
+                  <tr>
+                    <th>Statement</th>
+                    <th v-for="option in aiAgreement" :key="option.value" class="text-center align-middle">{{ option.text }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(question, index) in aiMentalCapacity" :key="index">
+                    <td>{{ question.text }}</td>
+                    <td v-for="option in aiAgreement" :key="option.value" class="text-center align-middle">
+                      <b-form-radio
+                        v-model="aiMentalCapacityResponses[index]"
+                        :name="'aiMentalCapacity_' + index"
+                        :value="option.value"
+                        class="custom-radio-button"
+                        @change="onFormInteraction"
+                        button
+                        button-variant="outline-black"
+                        size="md"
+                      >
+                        <span class="square-dot"></span>
+                      </b-form-radio>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </li>
+          </ol>
+        </div>
+
         <div class="button-area text-center mt-4">
-          <b-button variant="primary" name="next" v-on:click="next" class="entrance-btn shadow-sm">Start the Survey</b-button>
+          <b-button variant="primary" name="next" v-on:click="next" class="entrance-btn shadow-sm">Submit Survey</b-button>
         </div>
       </div>
     </b-jumbotron>
+
+    <!-- Debriefing Modal -->
+    <b-modal
+      v-model="showDebriefingModal"
+      title="Survey Completion"
+      size="lg"
+      no-close-on-backdrop
+      no-close-on-esc
+      hide-header-close
+      centered
+    >
+      <div class="completion-message">
+        <p>Thank you for completing the survey!</p>
+        <p>We look forward to your participation in the main study at <strong>2:00 PM EST today</strong>.</p>
+        <p class="important-note">
+          Please arrive on time —- <strong>Seats are limited!</strong>  <strong>Late arrivals may miss the chance to earn the <span style="color:#007bff;">$3.50 payment</span>.</strong>
+        </p>
+      </div>
+
+      <div class="feedback-area">
+        <h5>Optional: Share any feedback about your experience</h5>
+        <b-form-textarea
+          v-model="feedback"
+          placeholder="Your feedback (optional)"
+          rows="4"
+          max-rows="8"
+          class="mb-3"
+        />
+      </div>
+
+      <template #modal-footer>
+        <div class="w-100 text-center">
+          <b-button
+            variant="primary"
+            @click="submitFinalFeedback"
+            :disabled="submitting"
+            class="px-4"
+          >
+            {{ submitting ? 'Submitting...' : 'Complete Survey' }}
+          </b-button>
+        </div>
+      </template>
+
+      <b-alert
+        v-if="feedbackSubmitted"
+        variant="success"
+        class="mt-3"
+        show
+      >
+        Thank you for your feedback!
+      </b-alert>
+    </b-modal>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+
 export default {
   data: function () {
+    const aiMentalCapacityQuestions = [
+      { text: 'Capable of comprehending and responding to complex ideas or thoughts in a way similar to humans.' },
+      { text: 'Capable of analyzing problems critically and working toward a specific goal effectively.' },
+      { text: 'Capable of authentically replicating or simulating human emotions, such as happiness or sadness.' },
+      { text: 'Capable of understanding and responding appropriately to the emotions or perspectives of others.' },
+      { text: 'Capable of making ethical decisions or evaluating moral dilemmas.' },
+      { text: 'Capable of demonstrating self-awareness or recognizing its limitations and environment.' }
+    ]
     return {
       platform: null,
       worker_id: null,
@@ -42,15 +220,75 @@ export default {
       test_moderator_code: null,
       test_participant_code: null,
       test_policy_number: null,
-      test_turn_number: null
+      test_turn_number: null,
+      // Survey data
+      aiUsage: [
+        { text: 'Never', value: '1' },
+        { text: 'Rarely (less than once per month)', value: '2' },
+        { text: 'Occasionally (about once per month)', value: '3' },
+        { text: 'Sometimes (2-3 times per month)', value: '4' },
+        { text: 'Regularly (about once per week)', value: '5' },
+        { text: 'Often (several times per week)', value: '6' },
+        { text: 'Daily', value: '7' }
+      ],
+      aiAttitude: [
+        { text: 'Very negative', value: '1' },
+        { text: 'Negative', value: '2' },
+        { text: 'Somewhat negative', value: '3' },
+        { text: 'Neutral', value: '4' },
+        { text: 'Somewhat positive', value: '5' },
+        { text: 'Positive', value: '6' },
+        { text: 'Very positive', value: '7' }
+      ],
+      aiMusic: [
+        { text: 'Connecting to wireless speakers via Bluetooth', value: '1' },
+        { text: 'A playlist recommendation', value: '2' },
+        { text: 'Streaming the music over a wireless internet connection', value: '3' },
+        { text: 'Shuffle play from a chosen playlist', value: '4' }
+      ],
+      aiEmail: [
+        { text: 'The email service marking an email as read after the user opens it', value: '1' },
+        { text: 'The email service allowing the user to schedule an email to send at a specific time in the future', value: '2' },
+        { text: 'The email service categorizing an email as spam', value: '3' },
+        { text: 'The email service sorting emails by time and date', value: '4' }
+      ],
+      aiHome: [
+        { text: 'Programming a home thermostat to change temperatures at certain times', value: '1' },
+        { text: 'A security camera that sends an alert when there is an unrecognized person at the door', value: '2' },
+        { text: 'Programming a timer to control when lights in a home turn on and off', value: '3' },
+        { text: 'An indicator light that turns red when a water filter needs to be replaced', value: '4' }
+      ],
+      aiMentalCapacity: aiMentalCapacityQuestions,
+      aiAgreement: [
+        { text: 'Strongly disagree', value: '1' },
+        { text: 'Disagree', value: '2' },
+        { text: 'Somewhat disagree', value: '3' },
+        { text: 'Neutral', value: '4' },
+        { text: 'Somewhat agree', value: '5' },
+        { text: 'Agree', value: '6' },
+        { text: 'Strongly agree', value: '7' }
+      ],
+      // Response variables
+      aiToolUsageFrequency: null,
+      aiAttitudeSelection: null,
+      aiInMusic: null,
+      aiInEmail: null,
+      aiInHomeDevices: null,
+      aiMentalCapacityResponses: Array(aiMentalCapacityQuestions.length).fill(null),
+
+      // New properties for debriefing modal
+      showDebriefingModal: false,
+      feedback: '',
+      feedbackSubmitted: false,
+      submitting: false
     }
   },
-  mounted () { // get the worker id, study id, and session id from the URL
+  mounted () {
     this.prolific_processor(location.href)
+    window.scrollTo(0, 0)
   },
   methods: {
     prolific_processor: function (url) {
-      // https://dev.d1uau7ss3lp78y.amplifyapp.com/qualificationentrance/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}&TEST={{%TEST%}}&TEST_MODERATOR_CODE={{%TEST_MODERATOR%}}&TEST_PARTICIPANT_CODE={{%TEST_PARTICIPANT%}}&TEST_POLICY_NUMBER={{%TEST_POLICY%}}&TEST_TURN_NUMBER={{%TEST_TURN%}}
       if (url.includes('localhost')) {
         this.platform = 'localhost'
       } else {
@@ -71,23 +309,29 @@ export default {
         this.test_turn_number = prolificArray[7] ? prolificArray[7].split('=')[1] : 1
       }
     },
-
-    next: function () {
-      // update store
-      if (this.test === 'Y') {
-        this.$store.commit('assign_test_variables', {
-          test: this.test,
-          test_moderator_code: this.test_moderator_code,
-          test_participant_code: this.test_participant_code,
-          test_policy_number: this.test_policy_number,
-          test_turn_number: this.test_turn_number
-        })
-        console.log('Test variables assigned:', this.test_moderator_code, this.test_participant_code, this.test_policy_number, this.test_turn_number)
+    validateForm () {
+      if (
+        !this.aiToolUsageFrequency ||
+        !this.aiAttitudeSelection ||
+        !this.aiInMusic ||
+        !this.aiInEmail ||
+        !this.aiInHomeDevices ||
+        this.aiMentalCapacityResponses.some(r => r == null)
+      ) {
+        this.$alert('Please complete all required fields before submitting.')
+        return false
       }
+      return true
+    },
+    onFormInteraction () {
+      // Removed activity recording
+    },
+    next: async function () {
+      if (!this.validateForm()) return
 
-      // update backend and create subject
-      let body = new FormData()
-      if (this.$store.state.subject_id === null) { // If no subject id is stored in state, it means this is a new login
+      try {
+        // First create subject
+        let body = new FormData()
         if (typeof this.worker_id === 'undefined' || this.worker_id === null || this.worker_id === '') {
           this.$alert('We could not get your Prolific ID information, please return the HIT.', '', 'warning')
           return
@@ -102,19 +346,65 @@ export default {
           body.append('test_policy_number', this.test_policy_number)
           body.append('test_turn_number', this.test_turn_number)
         }
-        console.log(this.$server_url)
-        axios.post(this.$server_url + 'create_subject', body)
-          .then(response => {
-            if (response.data.success === true) {
-              this.$store.commit('assign_subject_id', {subject_id: response.data.subject_id})
-              this.$router.push('/DemograSurvey')
-            } else {
-              this.$alert(response.data.message || 'Error creating subject', '', 'warning')
-            }
-          })
-          .catch(e => {
-            this.$alert(e.response.data.detail)
-          })
+
+        const response = await axios.post(this.$server_url + 'create_subject', body)
+        if (response.data.success !== true) {
+          throw new Error(response.data.message || 'Error creating subject')
+        }
+        this.$store.commit('assign_subject_id', {subject_id: response.data.subject_id})
+
+        // Then submit survey
+        body = new FormData()
+        body.append('subject_id', response.data.subject_id)
+        body.append('aiToolUsageFrequency', this.aiToolUsageFrequency)
+        body.append('aiAttitudeSelection', this.aiAttitudeSelection)
+        body.append('aiInMusic', this.aiInMusic)
+        body.append('aiInEmail', this.aiInEmail)
+        body.append('aiInHomeDevices', this.aiInHomeDevices)
+        body.append('aiMentalCapacityResponses', JSON.stringify(this.aiMentalCapacityResponses))
+
+        const surveyResponse = await axios.post(this.$server_url + 'updateAIDemograSurvey', body)
+        if (!surveyResponse.data.success) {
+          throw new Error(surveyResponse.data.message || 'Error submitting survey')
+        }
+
+        // Show debriefing modal instead of navigating
+        this.showDebriefingModal = true
+      } catch (error) {
+        console.error('Error:', error)
+        this.$alert(error.message || 'An unexpected error occurred. Please try again.')
+      }
+    },
+
+    // New method for final feedback submission
+    async submitFinalFeedback () {
+      this.submitting = true
+
+      try {
+        // Submit feedback if provided
+        if (this.feedback && this.feedback.trim().length > 0) {
+          const feedbackBody = new FormData()
+          feedbackBody.append('subject_id', this.$store.state.subject_id)
+          feedbackBody.append('feedback_text', this.feedback)
+          await axios.post(this.$server_url + 'submit_feedback', feedbackBody)
+          this.feedbackSubmitted = true
+        }
+
+        // Submit to Prolific
+        const body = new FormData()
+        body.append('subject_id', this.$store.state.subject_id)
+        body.append('status', 'success')
+        const response = await axios.post(this.$server_url + 'submit_to_prolific', body)
+        if (response.data.success === true) {
+          window.location.href = response.data.prolific_url
+        } else {
+          throw new Error('Failed to submit to Prolific')
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        this.$alert('Some error happened! Please submit the HIT on Prolific manually.')
+      } finally {
+        this.submitting = false
       }
     }
   }
@@ -267,132 +557,180 @@ export default {
   display: inline-block;
   margin-bottom: 12px;
 }
-</style>
 
-<script>
-import axios from 'axios'
-export default {
-  data: function () {
-    return {
-      platform: null,
-      worker_id: null,
-      study_id: null,
-      session_id: null,
-      test_moderator_code: null,
-      test_participant_code: null,
-      test_policy_number: null,
-      test_turn_number: null
-    }
-  },
-  mounted () { // get the worker id, study id, and session id from the URL
-    this.prolific_processor(location.href)
-  },
-  methods: {
-    prolific_processor: function (url) {
-      // https://dev.d1uau7ss3lp78y.amplifyapp.com/qualificationentrance/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}&TEST={{%TEST%}}&TEST_MODERATOR_CODE={{%TEST_MODERATOR%}}&TEST_PARTICIPANT_CODE={{%TEST_PARTICIPANT%}}&TEST_POLICY_NUMBER={{%TEST_POLICY%}}&TEST_TURN_NUMBER={{%TEST_TURN%}}
-      if (url.includes('localhost')) {
-        this.platform = 'localhost'
-      } else {
-        this.platform = 'aws'
-      }
-
-      this.$store.commit('assign_platform', {platform: this.platform})
-      let prolificArray = url.split('?')[1].split('&')
-      this.worker_id = prolificArray[0].split('=')[1]
-      this.study_id = prolificArray[1].split('=')[1]
-      this.session_id = prolificArray[2].split('=')[1]
-      this.test = prolificArray[3] ? prolificArray[3].split('=')[1] : 'N'
-      console.log('Test:', this.test)
-      if (this.test === 'Y') {
-        this.test_moderator_code = prolificArray[4] ? prolificArray[4].split('=')[1] : 0
-        this.test_participant_code = prolificArray[5] ? prolificArray[5].split('=')[1] : 1
-        this.test_policy_number = prolificArray[6] ? prolificArray[6].split('=')[1] : 1
-        this.test_turn_number = prolificArray[7] ? prolificArray[7].split('=')[1] : 1
-      }
-    },
-
-    next: function () {
-      // update store
-      if (this.test === 'Y') {
-        this.$store.commit('assign_test_variables', {
-          test: this.test,
-          test_moderator_code: this.test_moderator_code,
-          test_participant_code: this.test_participant_code,
-          test_policy_number: this.test_policy_number,
-          test_turn_number: this.test_turn_number
-        })
-        console.log('Test variables assigned:', this.test_moderator_code, this.test_participant_code, this.test_policy_number, this.test_turn_number)
-      }
-
-      // update backend and create subject
-      let body = new FormData()
-      if (this.$store.state.subject_id === null) { // If no subject id is stored in state, it means this is a new login
-        if (typeof this.worker_id === 'undefined' || this.worker_id === null || this.worker_id === '') {
-          this.$alert('We could not get your Prolific ID information, please return the HIT.', '', 'warning')
-          return
-        }
-        body.append('worker_id', this.worker_id)
-        body.append('study_id', this.study_id)
-        body.append('session_id', this.session_id)
-        body.append('test', this.test)
-        if (this.test === 'Y') {
-          body.append('test_moderator_code', this.test_moderator_code)
-          body.append('test_participant_code', this.test_participant_code)
-          body.append('test_policy_number', this.test_policy_number)
-          body.append('test_turn_number', this.test_turn_number)
-        }
-        console.log(this.$server_url)
-        axios.post(this.$server_url + 'create_subject', body)
-          .then(response => {
-            if (response.data.success === true) {
-              this.$store.commit('assign_subject_id', {subject_id: response.data.subject_id})
-              this.$router.push('/DemograSurvey')
-            } else {
-              this.$alert(response.data.message || 'Error creating subject', '', 'warning')
-            }
-          })
-          .catch(e => {
-            this.$alert(e.response.data.detail)
-          })
-      }
-    }
-  }
+/* Adding new styles from DemograSurvey.vue */
+.agreement-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 0.5rem;
 }
-</script>
 
-<style scoped>
-.warning-box {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
+.agreement-options {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.option-label-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 90px;
+  text-align: center;
+}
+
+.option-label {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 4px;
+  min-height: 2.5em;
+  display: block;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+::v-deep .agreement-wrapper .btn-outline-black {
+  background: #fff !important;
+  color: #495057 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+::v-deep .agreement-wrapper .btn-outline-black.active,
+::v-deep .agreement-wrapper .btn-outline-black:active,
+::v-deep .agreement-wrapper .btn-outline-black:focus,
+::v-deep .agreement-wrapper .btn-outline-black:checked {
+  background: #888 !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.survey-section {
+  margin-top: 2rem;
+}
+
+.survey-section ol {
+  list-style-position: inside;
+  padding-left: 0;
+}
+
+.survey-section ol li {
+  border: 1px solid #ccc;
+  background-color: #fff;
   padding: 1rem;
   margin-bottom: 1rem;
+  border-radius: 4px;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
-.page-indicator {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #333;
-  background: #f2f2f2;
-  border-radius: 6px;
-  padding: 6px 18px;
-  display: inline-block;
-  margin-bottom: 12px;
-}
-</style>
 
-<style scoped>
-.button-area {
-  text-align: center;
-  margin-top: 20px;
+.survey-section ol li:hover,
+.survey-section ol li:focus-within {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14), 0 1.5px 6px rgba(0,0,0,0.10);
+  transform: translateY(-2px) scale(1.02);
+  z-index: 1;
 }
-.page-indicator {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #333;
-  background: #f2f2f2;
-  border-radius: 6px;
-  padding: 6px 18px;
+
+.square-dot {
   display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 2px solid #444;
+  border-radius: 50%;
+  margin: 2px auto;
+  transition: background 0.2s;
+}
+
+.custom-radio-button .btn {
+  background: #fff !important;
+  box-shadow: none;
+}
+
+.custom-radio-button .btn.active,
+.custom-radio-button .btn:active,
+.custom-radio-button .btn:focus {
+  background: #fff !important;
+  box-shadow: none;
+}
+
+.custom-radio-button .btn.active .square-dot {
+  background: #444;
+  border-color: #444;
+}
+
+.agreement-table {
+  margin-top: 1rem;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.agreement-table th,
+.agreement-table td {
+  vertical-align: middle;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.agreement-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  text-align: center;
+}
+
+.agreement-table td:first-child {
+  width: 40%;
+  text-align: left;
+}
+
+/* Styles for debriefing modal */
+.completion-message {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.completion-message p {
   margin-bottom: 12px;
+  font-size: 1.1em;
+}
+
+.completion-message p:last-child {
+  margin-bottom: 0;
+}
+
+.important-note {
+  color: #e65100;
+  font-weight: 500;
+}
+
+.feedback-area {
+  margin: 32px 0 16px 0;
+}
+
+::v-deep .modal-content {
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+::v-deep .modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+::v-deep .modal-footer {
+  border-top: none;
+  padding-top: 0;
 }
 </style>

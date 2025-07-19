@@ -1,6 +1,5 @@
 <template>
   <div class="debriefing">
-    <div class="page-indicator text-center mb-1">Page: 3 / 3</div>
     <h1>Survey Completion</h1>
     <div class="completion-message">
       <p>Thank you for completing the survey!</p>
@@ -11,7 +10,7 @@
     </div>
 
     <div class="feedback-area">
-      <h5>Optional: Share any feedback about your experience (optional)</h5>
+      <h5>Optional: Share any feedback about your experience</h5>
       <b-form-textarea
         v-model="feedback"
         placeholder="Your feedback (optional)"
