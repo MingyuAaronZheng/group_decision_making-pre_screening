@@ -4,8 +4,10 @@
     <h1>Survey Completion</h1>
     <div class="completion-message">
       <p>Thank you for completing the survey!</p>
-      <p>We look forward to your participation in the main study at 2:00 PM EST today.</p>
-      <p class="important-note">Please arrive on time — seats are limited, and late arrivals may miss the chance to earn the $3.50 payment.</p>
+      <p>We look forward to your participation in the main study at <strong>2:00 PM ESTtoday</strong>.</p>
+      <p class="important-note">
+        <strong>Seats are limited!</strong> Please arrive on time to secure your spot. <strong>Late arrivals may miss the chance to earn the <span style="color:#007bff;">$3.50 payment</span>.</strong>
+      </p>
     </div>
 
     <div class="feedback-area">
