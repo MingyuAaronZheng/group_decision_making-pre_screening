@@ -1,25 +1,26 @@
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from rest_framework.decorators import api_view
-from rest_framework.exceptions import PermissionDenied
-from .models import Group, PostDOSurvey, Subject, Group, MessageRecord, PostDFSurvey, PostDOSurvey, DemograSurvey, EarlyExit
-from .models import PreDSurvey
-from django.db.models import Count
-from django.utils import timezone
-from datetime import datetime, timedelta
-from random import sample
+# type: ignore
+from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
+from rest_framework.decorators import api_view  # type: ignore
+from rest_framework.exceptions import PermissionDenied  # type: ignore
+from .models import (
+    Group, PostDOSurvey, Subject, MessageRecord, PostDFSurvey, 
+    DemograSurvey, EarlyExit, PreDSurvey, TimeRecord, Feedback, AIDemograSurvey, EndFeedback
+)
+from django.db.models import Count  # type: ignore
+from django.utils import timezone  # type: ignore
+from datetime import datetime
 import random
 import json
-from decimal import *
 from .gpt import GPT
-from django.db import connection, transaction
+from django.db import transaction  # type: ignore
 import logging
-from datetime import datetime
-from django.views.decorators.csrf import ensure_csrf_cookie
 import time
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer  # type: ignore
+from asgiref.sync import async_to_sync  # type: ignore
 import threading
 import os
+from typing import List, Dict, Any, Optional
+from .models import NormalDemographicSurveyResponse
 
 SUCCESS_CODE = "CHUZDXJH"
 FAILED_ATTENTION_CODE = "C2ZILU9F"
@@ -30,8 +31,7 @@ EARLY_EXIT_CODE = "C6ZJ8888"
 
 
 # Initialize logger
-import os
-from pathlib import Path
+# Create logs directory if it doesn't exist
 
 # Create logs directory if it doesn't exist
 log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'experiment', 'logs')
@@ -62,33 +62,20 @@ logger.info('Logging initialized')
 logger.info(f'Log file: {log_file_name}')
 
 # Create your views here.
-def home_view(request,*args, **kwargs):
+def home_view(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
 	return HttpResponse("<h1>Hello World</h1>")
 
 
-from django.http import JsonResponse
-from django.core.exceptions import PermissionDenied
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-import random
-from random import sample
-from .models import Subject
-
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-import random
-from .models import Subject, Group, TimeRecord
-
-
-from django.http import HttpResponse
+# Additional imports for specific functions
+from django.views.decorators.csrf import csrf_exempt  # type: ignore
 
 @api_view(['GET'])
-def health_check(request):
+def health_check(request: HttpRequest) -> HttpResponse:
     return HttpResponse("OK")
 
 
 @api_view(['POST'])
-def create_subject(request):
+def create_subject(request: HttpRequest) -> JsonResponse:
     worker_id = request.POST.get('worker_id', None)
     study_id = request.POST.get('study_id', None)
     session_id = request.POST.get('session_id', None)
@@ -145,72 +132,78 @@ def create_subject(request):
     raise PermissionDenied("Worker ID is missing")
 
 @api_view(['POST'])
-def updateDemograSurvey(request):
+def update_normal_DemograSurvey(request: HttpRequest) -> JsonResponse:
+    """
+    Handle demographic survey submission and store responses in the new DemographicSurveyResponse model.
+    """
     response_data = {}
-    subject_id = request.POST.get('subject_id', None)
-    age_range = request.POST.get('ageRange', None)
-    gender_selection = request.POST.get('genderSelection', None)
-    income_range = request.POST.get('incomeRange', None)
-    education_level = request.POST.get('educationLevel', None)
-    ethnicity_selection = request.POST.get('ethnicitySelection', None)
-    religion_affiliation = request.POST.get('religionAffiliation', None)
-    political_affiliation = request.POST.get('politicalAffiliation', None)
-    immigration_status = request.POST.get('immigrationStatus', None)
-    social_media_reading_frequency = request.POST.get('socialMediaReadingFrequency', None)
-    social_media_posting_frequency = request.POST.get('socialMediaPostingFrequency', None)
-    social_media_reading_platforms = request.POST.get('socialMediaReadingPlatforms', None)
-    social_media_posting_platforms = request.POST.get('socialMediaPostingPlatforms', None)
-    ai_tool_usage_frequency = request.POST.get('aiToolUsageFrequency', None)
-    ai_attitude_selection = request.POST.get('aiAttitudeSelection', None)
-    ai_in_music = request.POST.get('aiInMusic', None)  # Expecting json string for checkboxes
-    ai_in_email = request.POST.get('aiInEmail', None)  # Expecting json string for checkboxes
-    ai_in_home_devices = request.POST.get('aiInHomeDevices', None)  # Expecting json string for checkboxes
-    ai_mental_capacity_responses = request.POST.get('aiMentalCapacityResponses', None)  # Expecting json string
+    subject_id = request.POST.get('subject_id')
 
-    logger.info("demogra response loaded for subject_id: %s", subject_id)
-    if subject_id != None:
-        try:
-            survey = DemograSurvey.objects.create(
-                subject_id=subject_id,
-                age_range=age_range,
-                gender_selection=gender_selection,
-                income_range=income_range,
-                education_level=education_level,
-                ethnicity_selection=ethnicity_selection,
-                religion_affiliation=religion_affiliation,
-                political_affiliation=political_affiliation,
-                immigration_status=immigration_status,
-                social_media_reading_frequency=social_media_reading_frequency,
-                social_media_posting_frequency=social_media_posting_frequency,
-                social_media_reading_platforms=json.loads(social_media_reading_platforms) if social_media_reading_platforms else [],
-                social_media_posting_platforms=json.loads(social_media_posting_platforms) if social_media_posting_platforms else [],
-                ai_tool_usage_frequency=ai_tool_usage_frequency,
-                ai_attitude_selection=ai_attitude_selection,
-                ai_in_music=ai_in_music,
-                ai_in_email=ai_in_email,
-                ai_in_home_devices=ai_in_home_devices,
-                ai_mental_capacity_responses=ai_mental_capacity_responses
-            )
-            logger.info("demogra survey record created for subject_id: %s", subject_id)
+    if not subject_id:
+        logger.error("Demographic survey submission failed: Missing subject_id")
+        return JsonResponse({
+            'success': False,
+            'message': 'Missing subject_id'
+        }, status=400)
 
-            time_record = TimeRecord.objects.get(subject_id=subject_id)
-            time_record.DemograSurvey_button_time = timezone.now()
-            time_record.save()
-            logger.info("demogra survey time record updated for subject_id: %s", subject_id)
+    try:
+        # Extract form data
+        survey_data = {
+            'subject_id': subject_id,
+            'age_range': request.POST.get('ageRange'),
+            'gender_selection': request.POST.get('genderSelection'),
+            'income_range': request.POST.get('incomeRange'),
+            'education_level': request.POST.get('educationLevel'),
+            'ethnicity_selection': request.POST.get('ethnicitySelection'),
+            'religion_affiliation': request.POST.get('religionAffiliation'),
+            'political_affiliation': request.POST.get('politicalAffiliation'),
+            'immigration_status': request.POST.get('immigrationStatus'),
+            'social_media_reading_frequency': request.POST.get('socialMediaReadingFrequency'),
+            'social_media_posting_frequency': request.POST.get('socialMediaPostingFrequency'),
+        }
 
-            response_data['success'] = True
-            response_data['message'] = 'Survey saved successfully'
-            return JsonResponse(response_data)
-        except Exception as e:
-            logger.error("demogra survey record creation failed for subject_id: %s, error: %s", subject_id, str(e), exc_info=True)
-            response_data['success'] = False
-            response_data['message'] = str(e)
-            return JsonResponse(response_data, status=500)
-    else:
-        logger.error("demogra survey record creation failed: Missing subject_id")
-        response_data['success'] = False
-        response_data['message'] = 'Missing subject_id'
-        return JsonResponse(response_data, status=400)
+        # Handle JSON fields
+        social_media_reading_platforms = request.POST.get('socialMediaReadingPlatforms')
+        social_media_posting_platforms = request.POST.get('socialMediaPostingPlatforms')
+        
+        if social_media_reading_platforms:
+            survey_data['social_media_reading_platforms'] = json.loads(social_media_reading_platforms)
+        if social_media_posting_platforms:
+            survey_data['social_media_posting_platforms'] = json.loads(social_media_posting_platforms)
+
+        # Create new survey response
+        survey = NormalDemographicSurveyResponse.objects.create(**survey_data)
+        logger.info("Demographic survey record created for subject_id: %s", subject_id)
+
+        # Update time record
+        time_record = TimeRecord.objects.get(subject_id=subject_id)
+        time_record.DemograSurvey_button_time = timezone.now()
+        time_record.save()
+        logger.info("Demographic survey time record updated for subject_id: %s", subject_id)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Survey saved successfully'
+        })
+
+    except TimeRecord.DoesNotExist:
+        logger.error("Time record not found for subject_id: %s", subject_id)
+        return JsonResponse({
+            'success': False,
+            'message': 'Time record not found'
+        }, status=404)
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON data in survey submission for subject_id: %s - %s", subject_id, str(e))
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid JSON data in survey submission'
+        }, status=400)
+    except Exception as e:
+        logger.error("Demographic survey submission failed for subject_id: %s - %s", subject_id, str(e), exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
 
 
 
@@ -224,11 +217,11 @@ import fcntl
 import os
 
 class ProcessLock:
-    def __init__(self, filename):
+    def __init__(self, filename: str) -> None:
         self.filename = filename
         self.fd = None
 
-    def acquire(self):
+    def acquire(self) -> bool:
         self.fd = open(self.filename, 'w')
         try:
             fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -237,19 +230,19 @@ class ProcessLock:
             self.fd.close()
             return False
 
-    def release(self):
+    def release(self) -> None:
         if self.fd:
             try:
                 fcntl.flock(self.fd, fcntl.LOCK_UN)
                 self.fd.close()
                 os.remove(self.filename)
-            except:
+            except Exception:
                 pass
 
 # Create a global process lock
 process_lock = ProcessLock('/tmp/gdm_inactive_checker.lock')
 
-def start_inactive_user_checker():
+def start_inactive_user_checker() -> None:
     """Starts the background thread to check for inactive users"""
     global inactive_check_thread, inactive_check_running
 
@@ -297,14 +290,72 @@ def start_inactive_user_checker():
         logger.error(f"Failed to start inactive user checker: {str(e)}")
 
 
-def check_inactive_users():
-    """Handles inactive users by marking them, disbanding their groups, and re-pairing active members."""
+def check_inactive_users() -> None:
+    
     logger.info("Running periodic inactive user check")
-    inactive_users = mark_inactive_users()  # Step 1: Identify inactive users
+    mark_inactive_users()  # Step 1: Identify inactive users
     # users_to_repair = remove_inactive_users_from_groups(inactive_users)  # Step 2: Disband groups and collect active members
     # reassign_active_users(users_to_repair)  # Step 3: Re-pair remaining users from scratch
+    
+    # Also check for groups where all members have finished chat
+    check_finished_chat_groups()
 
-def mark_inactive_users():
+def check_finished_chat_groups() -> None:
+    """Check active chatting groups and mark them as finished when all members have finished chat."""
+    logger.info("Running finished chat groups check")
+    finished_groups = mark_finished_chat_groups()
+    logger.info(f"Marked {len(finished_groups)} groups as finished chatting")
+
+def mark_finished_chat_groups() -> List[Group]:
+    """
+    Find active chatting groups where all members have finished_chat=True 
+    and mark those groups as chatting=False.
+    Returns a list of groups that were marked as finished.
+    """
+    logger.info("Checking for groups where all members have finished chat")
+    
+    # Find all active chatting groups
+    active_chat_groups = Group.objects.filter(chatting=True)
+    finished_groups = []
+    
+    for group in active_chat_groups:
+        try:
+            # Get member IDs from the group
+            member_ids = group.member_ids.get('subject_ids', [])
+            active_member_ids = group.activate_member_ids.get('subject_ids', [])
+            if not active_member_ids:  # If group has no active members, mark it as not chatting
+                logger.info(f"Group {group._id} has no active members, marking as not chatting")
+                group.chatting = False
+                group.save(update_fields=['chatting'])
+                record_end_chat_time(group._id)
+                finished_groups.append(group)
+                continue
+            
+            # Get all subjects in this group
+            group_subjects = Subject.objects.filter(_id__in=member_ids)
+            
+            # Check if all members have finished chat
+            all_finished = all(subject.finished_chat for subject in group_subjects)
+            
+            if all_finished:
+                logger.info(f"All members in group {group._id} have finished chat, marking group as finished")
+                
+                # Mark group as not chatting anymore
+                group.chatting = False
+                group.save(update_fields=['chatting'])
+                
+                # Record end chat time for this group
+                record_end_chat_time(group._id)
+                
+                finished_groups.append(group)
+                
+        except Exception as e:
+            logger.error(f"Error processing group {group._id} for finished chat check: {str(e)}")
+            continue
+    
+    return finished_groups
+
+def mark_inactive_users() -> List[Subject]:
     """
     Main function to find and process groups with inactive members.
     Returns a list of all processed users across all groups.
@@ -321,7 +372,7 @@ def mark_inactive_users():
     logger.info(f"Completed processing {len(all_processed_users)} inactive users: {all_processed_users} across {len(groups)} groups: {groups}")
     return all_processed_users
 
-def find_groups_with_inactive_members():
+def find_groups_with_inactive_members() -> List[Group]:
     """
     Finds all active chat groups that have at least one inactive member.
     Returns a list of group objects that need to be processed.
@@ -345,13 +396,14 @@ def find_groups_with_inactive_members():
             chatting=True
         )
 
+
         if inactive_members.exists():
             groups_with_inactive.append(group)
 
     logger.info(f"Found {len(groups_with_inactive)} groups: {groups_with_inactive} with inactive members")
     return groups_with_inactive
 
-def process_inactive_members_in_group(group):
+def process_inactive_members_in_group(group: Group) -> List[Subject]:
     """
     Processes all inactive members in a single group.
     Returns a list of processed user objects.
@@ -398,7 +450,7 @@ def process_inactive_members_in_group(group):
 
     return processed_users
 
-def send_inactive_notification(group_id, subject_id):
+def send_inactive_notification(group_id: int, subject_id: int) -> None:
     """Sends a WebSocket notification when a user is marked as inactive."""
     try:
         channel_layer = get_channel_layer()
@@ -419,7 +471,7 @@ def send_inactive_notification(group_id, subject_id):
 
 
 @api_view(['POST'])
-def pairing(request):
+def pairing(request: HttpRequest) -> JsonResponse:
     """Pairs users into groups with different opinions on at least one shared statement."""
 
     try:
@@ -504,7 +556,7 @@ def pairing(request):
         # Assign `moderator_condition`
         # REAL: 50% chance for AI Moderator
         if subject.test == 'N':
-            moderator_condition = random.choice([0, 1])
+            moderator_condition = random.choice([1])
             logger.info('Real moderator code: %s', moderator_condition)
         else:
             # TEST: Use fixed moderator code
@@ -513,7 +565,7 @@ def pairing(request):
         # Assign `participant_condition` with equal probability
         # REAL: 2 human; 1 human + 1 Advocate AI; 1 human + 1 Dispute AI; 3 human
         if subject.test == 'N':
-            participant_condition = random.choice([0, 1, 2, 3])
+            participant_condition = random.choice([1,2,3])
             logger.info('Real participant code: %s', participant_condition)
         else:
             # TEST: Use fixed participant code
@@ -529,7 +581,10 @@ def pairing(request):
                 current_size=0,
                 current_turn=1
             )
-            logger.info('Group created with moderator condition: %s, participant condition: %s, and chat statement index: %s', moderator_condition, participant_condition, chat_statement_idx)
+            if participant_condition == 1 or participant_condition == 2:
+                group.AI_participant_position = random.choice([0, 1])
+                group.save(update_fields=['AI_participant_position'])
+            logger.info('Group created with moderator condition: %s, participant condition: %s, AI participant position: %s, and chat statement index: %s', moderator_condition, participant_condition, group.AI_participant_position, chat_statement_idx)
 
             # Assign both users to the group
             group.member_ids['subject_ids'] = [subject._id, random_match_partner._id]
@@ -581,7 +636,7 @@ def pairing(request):
         logger.error(f'Error in pairing function: {str(e)}', exc_info=True)
         return JsonResponse({'success': False, 'message': str(e), 'has_capacity': False}, status=500)
 
-def get_average_waiting_time():
+def get_average_waiting_time() -> float:
     try:
         time_records = TimeRecord.objects.filter(pair_end_time__isnull=False, pair_start_time__isnull=False)
         # print("REDIS_URL:", os.environ['REDIS_URL'])
@@ -619,7 +674,7 @@ def get_average_waiting_time():
         return 10
 
 @api_view(['POST'])
-def set_pipei(request):
+def set_pipei(request: HttpRequest) -> JsonResponse:
     """Sets a subject's ready_to_pair status to True And record start pairing time."""
     subject_id = request.POST.get('subject_id', None)
 
@@ -650,7 +705,7 @@ def set_pipei(request):
 
 
 @api_view(['POST'])
-def set_pipei_end_time(request):
+def set_pipei_end_time(request: HttpRequest) -> JsonResponse:
     """Sets a subject's ready_to_pair status to False And record end pairing time."""
     subject_id = request.POST.get('subject_id', None)
 
@@ -672,7 +727,7 @@ def set_pipei_end_time(request):
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 @api_view(['POST'])
-def set_not_ready(request):
+def set_not_ready(request: HttpRequest) -> JsonResponse:
     """Sets a subject's ready_to_pair status to False And record end pairing time."""
     subject_id = request.POST.get('subject_id', None)
 
@@ -695,7 +750,7 @@ def set_not_ready(request):
 
 
 
-def get_different_opinions(subject, partner):
+def get_different_opinions(subject: Subject, partner: Subject) -> List[int]:
     """Returns all statement_ids where participants have opposing views."""
     different_opinions_index = []
 
@@ -722,7 +777,7 @@ def get_different_opinions(subject, partner):
         logger.info(f"Error in get_different_opinions: {e}")
     return different_opinions_index
 
-def get_statement_frequencies():
+def get_statement_frequencies() -> Dict[int, int]:
     """Counts how many times each statement has been selected for discussion and excludes those exceeding the threshold."""
     # Get all groups with a valid statement index
     groups = Group.objects.exclude(group_chat_statement_index=-1)
@@ -758,7 +813,7 @@ def get_statement_frequencies():
     logger.info(f"Statement frequencies: {result}")
     return result
 
-def assign_avatars_to_group(group):
+def assign_avatars_to_group(group: Group) -> List[Dict[str, Any]]:
     """Assigns unique avatars to all members of a group."""
     logger.info(f"Starting avatar assignment for group {group._id}")
     colors = ['Red', 'Blue', 'Orange']
@@ -843,7 +898,28 @@ def record_end_chat_time(group_id: int) -> None:
         logger.error(f'Error recording end chat time: {str(e)}')
 
 @api_view(['POST'])
-def update_chat_status(request):
+def finish_chat(request: HttpRequest) -> JsonResponse:
+    """Finish a chat session for a subject."""
+    subject_id = request.POST.get('subject_id', None)
+    if subject_id is None:
+        logger.info(f'Missing subject_id in finish_chat')
+        return JsonResponse({'success': False, 'message': 'Missing subject_id'}, status=400)
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+        subject.finished_chat = True
+        subject.save()
+        logger.info(f'Subject {subject_id} finished chat')
+        return JsonResponse({'success': True, 'message': 'Subject finished chat'}) 
+    except Subject.DoesNotExist:
+        logger.error(f'Subject {subject_id} not found')
+        return JsonResponse({'success': False, 'message': 'Subject not found'}, status=404)
+    except Exception as e:
+        logger.error(f'Error finishing chat: {str(e)}')
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@api_view(['POST'])
+def update_chat_status(request: HttpRequest) -> JsonResponse:
     """Update the 'chatting' status of a group and send welcome message if needed"""
     try:
         group_id = request.POST.get('group_id')
@@ -866,9 +942,10 @@ def update_chat_status(request):
         logger.info(f"Updated chat status for group {group_id}: {group.chatting}")
 
         # Update chatting status for all subjects in the group
-        subject_ids = group.member_ids.get('subject_ids', [])
-        Subject.objects.filter(_id__in=subject_ids).update(chatting=chatting.lower() == 'true')
-        logger.info(f"Updated chatting status for all subjects in group {group_id}: {group.chatting}")
+        if chatting.lower() == 'true':
+            subject_ids = group.member_ids.get('subject_ids', [])
+            Subject.objects.filter(_id__in=subject_ids).update(chatting=chatting.lower() == 'true')
+            logger.info(f"Updated chatting status for all subjects in group {group_id}: {group.chatting}")
 
 
         return JsonResponse({
@@ -884,7 +961,7 @@ def update_chat_status(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-def update_system_message(request):
+def update_system_message(request: HttpRequest) -> JsonResponse:
     """Store a custom GPT system prompt on the Group model."""
     group_id = request.data.get('group_id')
     text = request.data.get('system_message', '')
@@ -899,7 +976,7 @@ def update_system_message(request):
         return JsonResponse({'ok': False, 'error': 'no such group'}, status=404)
 
 @api_view(['GET'])
-def get_system_message(request):
+def get_system_message(request: HttpRequest) -> JsonResponse:
     """Retrieve the custom GPT system prompt for a group."""
     group_id = request.GET.get('group_id')
     try:
@@ -917,7 +994,7 @@ def get_system_message(request):
         logger.error("Group %s not found", group_id)
         return JsonResponse({'system_message': ''}, status=404)
 
-def record_message(subject_id=None, group_id=None, message=None):
+def record_message(subject_id: Optional[int] = None, group_id: Optional[int] = None, message: Optional[str] = None) -> Optional[JsonResponse]:
     """
     Records a message from a subject
     Args:
@@ -988,8 +1065,7 @@ def record_message(subject_id=None, group_id=None, message=None):
         logger.info('Message: %s', message)
         return JsonResponse({'error': str(e)}, status=500)
 
-import time
-def send_turn_end_gpt_response(group_id, current_turn_str):
+def send_turn_end_gpt_response(group_id: int, current_turn_str: str) -> None:
     logger.info('Starting send_turn_end_gpt_response for group %s for turn %s', group_id, current_turn_str)
     # get group
     group = Group.objects.get(pk=group_id)
@@ -1030,8 +1106,8 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                         'code': 203,
                         'typing_info': {
                             'subject_id': participant_id,
-                            'avatar_name': 'AI Participant',
-                            'avatar_color': '',
+                            'avatar_name': "AI Participant ",
+                            'avatar_color': "",
                             'is_typing': True
                         }
                     }
@@ -1041,6 +1117,7 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                 group_id=group_id,
                 moderator_condition=0,  # Set to 0 to get only participant response
                 participant_condition=group.group_participant_condition,
+                AI_participant_position=group.AI_participant_position,
                 current_message_records=format_message_records(current_message_records),
                 previous_message_records=format_message_records(previous_message_records),
                 turn_number=int(current_turn_str)
@@ -1080,9 +1157,7 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                 )
                 # Send typing notification: AI Participant stopped typing
 
-                threading.Timer(
-                    2,
-                    lambda: async_to_sync(channel_layer.group_send)(
+                async_to_sync(channel_layer.group_send)(
                         f"chat_{group_id}",
                         {
                             "type": "chat_message",
@@ -1090,14 +1165,13 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                                 "code": 203,
                                 "typing_info": {
                                     "subject_id": participant_id,
-                                    "avatar_name": "AI Participant",
+                                    "avatar_name": "AI Participant ",
                                     "avatar_color": "",
                                     "is_typing": False
                                 }
                             }
                         }
                     )
-                ).start()
                 # Add to current messages for moderator context
                 current_message_records = list(current_message_records)
                 current_message_records.append(gpt_participant_message)
@@ -1115,8 +1189,8 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                         'code': 203,
                         'typing_info': {
                             'subject_id': -2,
-                            'avatar_name': 'AI Moderator',
-                            'avatar_color': '',
+                            'avatar_name': "AI Moderator ",
+                            'avatar_color': "",
                             'is_typing': True
                         }
                     }
@@ -1162,9 +1236,7 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                         }
                     }
                 )
-                threading.Timer(
-                    7,
-                    lambda: async_to_sync(channel_layer.group_send)(
+                async_to_sync(channel_layer.group_send)(
                         f"chat_{group_id}",
                         {
                             "type": "chat_message",
@@ -1179,14 +1251,14 @@ def send_turn_end_gpt_response(group_id, current_turn_str):
                             }
                         }
                     )
-                ).start()
+                
 
     except Exception as e:
         logger.info(f"Error in send_turn_end_gpt_response: %s", str(e))
         # You might want to log this error or handle it in a specific way
 
 
-def format_message_records(message_records):
+def format_message_records(message_records: Any) -> List[Dict[str, Any]]:
     """Format messages for GPT input"""
     logger.info("formatting message records")
     formatted = []
@@ -1209,7 +1281,7 @@ def format_message_records(message_records):
     logger.info("formatted message records: %s", formatted)
     return formatted
 
-def get_ai_role(subject_id):
+def get_ai_role(subject_id: int) -> str:
     """Get AI role based on subject ID"""
     if subject_id == -2:
         return "AI Moderator"
@@ -1219,7 +1291,7 @@ def get_ai_role(subject_id):
         return "Disputing AI Participant"
     return "AI"
 
-def get_ai_subject_id(group):
+def get_ai_subject_id(group: Group) -> int:
     """Get appropriate AI subject ID based on group conditions"""
     if group.group_moderator_condition == 1:
         return -2  # AI Moderator
@@ -1229,14 +1301,14 @@ def get_ai_subject_id(group):
         return -4  # Disputing AI
     return -5  # Generic AI
 
-def record_post_do_survey_submit_time(subject_id):
+def record_post_do_survey_submit_time(subject_id: int) -> None:
     time_record = TimeRecord.objects.get(subject_id=subject_id)
     time_record.PostDOSurvey_button_time = timezone.now()
     time_record.save()
     logger.info("PostDOSurvey_button_time updated for subject %s", subject_id)
 
 @api_view(['POST'])
-def post_do_survey(request):
+def post_do_survey(request: HttpRequest) -> JsonResponse:
     response_data = {}
     data = request.data  # Using request.data since we're sending json, not form data
     subject_id = data.get('subject_id', None)
@@ -1272,14 +1344,14 @@ def post_do_survey(request):
     return JsonResponse(response_data)
 
 
-def record_post_df_survey_submit_time(subject_id):
+def record_post_df_survey_submit_time(subject_id: int) -> None:
     time_record = TimeRecord.objects.get(subject_id=subject_id)
     time_record.PostDFSurvey_button_time = timezone.now()
     time_record.save()
     logger.info("PostDFSurvey_button_time updated for subject %s", subject_id)
 
 @api_view(['POST'])
-def post_df_survey(request):
+def post_df_survey(request: HttpRequest) -> JsonResponse:
     """Save final post-discussion survey"""
     response_data = {}
     data = request.data
@@ -1350,7 +1422,7 @@ def post_df_survey(request):
 
 
 @api_view(['POST'])
-def confirm_instructions(request):
+def confirm_instructions(request: HttpRequest) -> JsonResponse:
     subject_id = request.POST.get('subject_id')
     group_id = request.POST.get('group_id')
 
@@ -1404,7 +1476,7 @@ def confirm_instructions(request):
 
 
 @api_view(['POST'])
-def Update_pre_discussion_survey(request):
+def Update_pre_discussion_survey(request: HttpRequest) -> JsonResponse:
     response_data = {}
     data = request.data
     subject_id = data.get('subject_id', None)
@@ -1445,7 +1517,7 @@ def Update_pre_discussion_survey(request):
 
 
 @api_view(['POST'])
-def get_group_member_agreements(request):
+def get_group_member_agreements(request: HttpRequest) -> JsonResponse:
     """Return group members' avatar name and their agreement level on the chat statement."""
     group_id = request.POST.get('group_id', None)
     try:
@@ -1480,19 +1552,19 @@ def get_group_member_agreements(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-def terminate_participation(request):
+def terminate_participation(request: HttpRequest) -> JsonResponse:
     """Terminates a subject's participation in the study."""
     import logging
     import json
     from django.conf import settings
     import os
     from datetime import datetime
-    
+
     # Set up logging
     log_dir = os.path.join(settings.BASE_DIR, 'server', 'logs')
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, 'termination_requests.log')
-    
+
     # Configure logging to file
     logging.basicConfig(
         level=logging.INFO,
@@ -1502,34 +1574,34 @@ def terminate_participation(request):
             logging.StreamHandler()
         ]
     )
-    
+
     # Log the incoming request
     request_id = f"req_{int(datetime.now().timestamp() * 1000)}"
     client_ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR')
-    
+
     logging.info(f"[{request_id}] Received termination request. IP: {client_ip}, Headers: {dict(request.headers)}")
-    
+
     subject_id = request.POST.get('subject_id', None)
     if subject_id is None:
         logging.error(f"[{request_id}] Missing subject_id in request")
         return JsonResponse({'success': False, 'message': 'Missing subject_id'}, status=400)
-        
+
     logging.info(f"[{request_id}] Processing termination for subject_id: {subject_id}")
-    
+
     try:
         subject = Subject.objects.get(pk=subject_id)
         logging.info(f"[{request_id}] Found subject: {subject_id}, current active status: {subject.active}")
-        
+
         if not subject.active:
             logging.warning(f"[{request_id}] Subject {subject_id} was already inactive")
             return JsonResponse({'success': True, 'message': 'Subject was already inactive'})
-            
+
         subject.active = False
         subject.save(update_fields=['active'])
         logging.info(f"[{request_id}] Successfully deactivated subject {subject_id}")
-        
+
         return JsonResponse({'success': True, 'request_id': request_id})
-        
+
     except Subject.DoesNotExist:
         logging.error(f"[{request_id}] Subject not found: {subject_id}")
         return JsonResponse({'success': False, 'message': 'Subject not found'}, status=404)
@@ -1539,7 +1611,7 @@ def terminate_participation(request):
 
 
 @api_view(['POST'])
-def client_logs(request):
+def client_logs(request: HttpRequest) -> JsonResponse:
     """
     Receives and stores client-side logs.
     Expected POST data:
@@ -1551,10 +1623,10 @@ def client_logs(request):
         logs = request.POST.get('logs', '')
         page = request.POST.get('page', 'unknown')
         timestamp = request.POST.get('timestamp', '')
-        
+
         if not logs:
             return JsonResponse({'success': False, 'message': 'No logs provided'}, status=400)
-            
+
         # Save logs to file using our utility function
         from .logging_utils import save_client_logs
         success, message = save_client_logs({
@@ -1562,20 +1634,20 @@ def client_logs(request):
             'page': page,
             'timestamp': timestamp or datetime.now().isoformat()
         })
-        
+
         if success:
             return JsonResponse({'success': True, 'message': message})
         else:
             return JsonResponse({'success': False, 'message': message}, status=500)
-            
+
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 
 @api_view(['POST'])
-def submit_to_prolific(request):
+def submit_to_prolific(request: HttpRequest) -> JsonResponse:
     """Submits a subject's participation in the study to Prolific."""
-    json = {}
+    response_data = {}
     subject_id = request.POST.get('subject_id', None)
     status = request.POST.get('status', None)
     logger.info("submit_to_prolific: subject_id: %s, status: %s", subject_id, status)
@@ -1609,3 +1681,100 @@ def submit_to_prolific(request):
         prolific_url = f"https://app.prolific.co/submissions/complete?cc={code}"
         return JsonResponse({'success': True, 'prolific_url': prolific_url})
     raise PermissionDenied("Subject id is missing, please contact the requester.")
+
+@api_view(['POST'])
+def submit_end_feedback(request: HttpRequest) -> JsonResponse:
+    """Receives and stores optional feedback from users at the end of the study."""
+    subject_id = request.POST.get('subject_id', None)
+    feedback_text = request.POST.get('feedback_text', '')
+    if subject_id is None:
+        return JsonResponse({'success': False, 'message': 'Missing subject_id'}, status=400)
+    try:
+        EndFeedback.objects.create(subject_id=subject_id, feedback_text=feedback_text)
+        return JsonResponse({'success': True, 'message': 'Feedback submitted successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@api_view(['POST'])
+def check_finished_groups(request: HttpRequest) -> JsonResponse:
+    """Manually trigger check for groups where all members have finished chat."""
+    try:
+        finished_groups = mark_finished_chat_groups()
+        group_ids = [group._id for group in finished_groups]
+        return JsonResponse({
+            'success': True, 
+            'message': f'Checked all active groups, marked {len(finished_groups)} as finished',
+            'finished_group_ids': group_ids
+        })
+    except Exception as e:
+        logger.error(f'Error in manual finished groups check: {str(e)}', exc_info=True)
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@api_view(['POST'])
+def updateAIDemograSurvey(request: HttpRequest) -> JsonResponse:
+    response_data = {}
+    subject_id = request.POST.get('subject_id', None)
+    ai_tool_usage_frequency = request.POST.get('aiToolUsageFrequency', None)
+    ai_attitude_selection = request.POST.get('aiAttitudeSelection', None)
+    ai_in_music = request.POST.get('aiInMusic', None)
+    ai_in_email = request.POST.get('aiInEmail', None)
+    ai_in_home_devices = request.POST.get('aiInHomeDevices', None)
+    ai_mental_capacity_responses = request.POST.get('aiMentalCapacityResponses', None)
+
+    logger.info("AI survey response loaded for subject_id: %s", subject_id)
+    
+    # Validate required fields
+    if not all([
+        subject_id,
+        ai_tool_usage_frequency,
+        ai_attitude_selection,
+        ai_in_music,
+        ai_in_email,
+        ai_in_home_devices,
+        ai_mental_capacity_responses
+    ]):
+        logger.error("AI survey submission failed: Missing required fields")
+        response_data['success'] = False
+        response_data['message'] = 'Please complete all required fields'
+        return JsonResponse(response_data, status=400)
+
+    try:
+        # Validate mental capacity responses
+        mental_capacity_responses = json.loads(ai_mental_capacity_responses)
+        if not isinstance(mental_capacity_responses, list) or len(mental_capacity_responses) != 6 or any(r is None for r in mental_capacity_responses):
+            logger.error("AI survey submission failed: Invalid mental capacity responses format")
+            response_data['success'] = False
+            response_data['message'] = 'Invalid mental capacity responses'
+            return JsonResponse(response_data, status=400)
+
+        # Create AI survey record
+        survey = AIDemograSurvey.objects.create(
+            subject_id=subject_id,
+            ai_tool_usage_frequency=ai_tool_usage_frequency,
+            ai_attitude_selection=ai_attitude_selection,
+            ai_in_music=ai_in_music,
+            ai_in_email=ai_in_email,
+            ai_in_home_devices=ai_in_home_devices,
+            ai_mental_capacity_responses=ai_mental_capacity_responses
+        )
+        logger.info("AI survey record created for subject_id: %s", subject_id)
+
+        # Update time record
+        time_record = TimeRecord.objects.get(subject_id=subject_id)
+        time_record.DemograSurvey_button_time = timezone.now()
+        time_record.save()
+        logger.info("AI survey time record updated for subject_id: %s", subject_id)
+
+        response_data['success'] = True
+        response_data['message'] = 'Survey saved successfully'
+        return JsonResponse(response_data)
+    except json.JSONDecodeError:
+        logger.error("AI survey submission failed: Invalid JSON format for mental capacity responses", exc_info=True)
+        response_data['success'] = False
+        response_data['message'] = 'Invalid response format'
+        return JsonResponse(response_data, status=400)
+    except Exception as e:
+        logger.error("AI survey record creation failed for subject_id: %s, error: %s", subject_id, str(e), exc_info=True)
+        response_data['success'] = False
+        response_data['message'] = str(e)
+        return JsonResponse(response_data, status=500)
