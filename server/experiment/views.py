@@ -117,7 +117,7 @@ def create_subject(request: HttpRequest) -> JsonResponse:
                     worker_id=worker_id,
                     study_id=study_id,
                     session_id=session_id,
-                    status='eligible_for_main_recruitment',
+                    status='in progress',
                     test=test,
                     test_moderator_code=test_moderator_code,
                     test_participant_code=test_participant_code,
@@ -130,7 +130,7 @@ def create_subject(request: HttpRequest) -> JsonResponse:
                     worker_id=worker_id,
                     study_id=study_id,
                     session_id=session_id,
-                    status='eligible_for_main_recruitment',
+                    status='in progress',
                     test=test
                 )
                 logger.info("normal subject created: %s", sub._id)
