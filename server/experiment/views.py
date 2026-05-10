@@ -30,6 +30,20 @@ FAILED_PAIRING_CODE = "C5ZJ8888"
 EARLY_EXIT_CODE = "C6ZJ8888"
 
 
+def parse_json_field(value: Any, default: Any) -> Any:
+    if value is None or value == "":
+        return default
+    if isinstance(value, (list, dict)):
+        return value
+    if isinstance(value, str):
+        return json.loads(value)
+    return value
+
+
+def validate_scale_value(value: Any, allowed_values: set[str]) -> bool:
+    return str(value) in allowed_values
+
+
 # Initialize logger
 # Create logs directory if it doesn't exist
 
@@ -86,6 +100,13 @@ def create_subject(request: HttpRequest) -> JsonResponse:
         test_policy_number = request.POST.get('test_policy_number', None)
         test_turn_number = request.POST.get('test_turn_number', None)
     logger.info("worker_id: %s with study_id: %s and session_id: %s and test: %s", worker_id, study_id, session_id, test)
+    if not worker_id or not study_id or not session_id:
+        return JsonResponse({
+            "success": False,
+            "message": "Missing required Prolific identifiers",
+            "status": "invalid_prolific_identity"
+        }, status=400)
+
     if worker_id is not None:
         if not Subject.objects.filter(worker_id=worker_id).exists():
             # Normal subject creation
@@ -96,6 +117,7 @@ def create_subject(request: HttpRequest) -> JsonResponse:
                     worker_id=worker_id,
                     study_id=study_id,
                     session_id=session_id,
+                    status='eligible_for_main_recruitment',
                     test=test,
                     test_moderator_code=test_moderator_code,
                     test_participant_code=test_participant_code,
@@ -108,6 +130,7 @@ def create_subject(request: HttpRequest) -> JsonResponse:
                     worker_id=worker_id,
                     study_id=study_id,
                     session_id=session_id,
+                    status='eligible_for_main_recruitment',
                     test=test
                 )
                 logger.info("normal subject created: %s", sub._id)
@@ -123,9 +146,16 @@ def create_subject(request: HttpRequest) -> JsonResponse:
             })
         else:
             logger.info("Worker ID: %s already exists", worker_id)
+            existing_subject = Subject.objects.filter(worker_id=worker_id).first()
+            if existing_subject:
+                existing_subject.status = 'duplicate'
+                existing_subject.active = False
+                existing_subject.end_time = timezone.now()
+                existing_subject.save(update_fields=['status', 'active', 'end_time'])
             return JsonResponse({
                 "success": False,
-                "message": "Worker ID already exists"
+                "message": "Worker ID already exists",
+                "status": "duplicate"
             })
 
 
@@ -1740,24 +1770,42 @@ def updateAIDemograSurvey(request: HttpRequest) -> JsonResponse:
 
     try:
         # Validate mental capacity responses
-        mental_capacity_responses = json.loads(ai_mental_capacity_responses)
+        mental_capacity_responses = parse_json_field(ai_mental_capacity_responses, [])
         if not isinstance(mental_capacity_responses, list) or len(mental_capacity_responses) != 6 or any(r is None for r in mental_capacity_responses):
             logger.error("AI survey submission failed: Invalid mental capacity responses format")
             response_data['success'] = False
             response_data['message'] = 'Invalid mental capacity responses'
             return JsonResponse(response_data, status=400)
+        if not all(validate_scale_value(r, {'1', '2', '3', '4', '5', '6', '7'}) for r in mental_capacity_responses):
+            response_data['success'] = False
+            response_data['message'] = 'Mental capacity responses are out of range'
+            return JsonResponse(response_data, status=400)
+        if not all([
+            validate_scale_value(ai_tool_usage_frequency, {'1', '2', '3', '4', '5', '6', '7'}),
+            validate_scale_value(ai_attitude_selection, {'1', '2', '3', '4', '5', '6', '7'}),
+            validate_scale_value(ai_in_music, {'1', '2', '3', '4'}),
+            validate_scale_value(ai_in_email, {'1', '2', '3', '4'}),
+            validate_scale_value(ai_in_home_devices, {'1', '2', '3', '4'}),
+        ]):
+            response_data['success'] = False
+            response_data['message'] = 'One or more AI survey values are out of range'
+            return JsonResponse(response_data, status=400)
 
         # Create AI survey record
-        survey = AIDemograSurvey.objects.create(
+        survey, _ = AIDemograSurvey.objects.update_or_create(
             subject_id=subject_id,
-            ai_tool_usage_frequency=ai_tool_usage_frequency,
-            ai_attitude_selection=ai_attitude_selection,
-            ai_in_music=ai_in_music,
-            ai_in_email=ai_in_email,
-            ai_in_home_devices=ai_in_home_devices,
-            ai_mental_capacity_responses=ai_mental_capacity_responses
+            defaults={
+                'ai_tool_usage_frequency': ai_tool_usage_frequency,
+                'ai_attitude_selection': ai_attitude_selection,
+                'ai_in_music': ai_in_music,
+                'ai_in_email': ai_in_email,
+                'ai_in_home_devices': ai_in_home_devices,
+                'ai_mental_capacity_responses': mental_capacity_responses
+            }
         )
         logger.info("AI survey record created for subject_id: %s", subject_id)
+
+        Subject.objects.filter(pk=subject_id).update(status='eligible_for_main_recruitment')
 
         # Update time record
         time_record = TimeRecord.objects.get(subject_id=subject_id)

@@ -276,7 +276,7 @@ class AIDemograSurvey(models.Model):
     ai_in_music = models.CharField(max_length=1)  # Single-digit option (1-4)
     ai_in_email = models.CharField(max_length=1)  # Single-digit option (1-4)
     ai_in_home_devices = models.CharField(max_length=1)  # Single-digit option (1-4)
-    ai_mental_capacity_responses = models.TextField()  # JSON array of 6 responses
+    ai_mental_capacity_responses = JSONField(default=list)  # JSON array of 6 responses
     time_stamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
