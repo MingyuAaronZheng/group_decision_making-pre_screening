@@ -50,6 +50,7 @@ DEFAULT_ALLOWED_HOSTS = [
     'www.group-discussion-experiment.us-east-2.elasticbeanstalk.com',
     'gobackend.discussionexperiment.com',
     'www.gobackend.discussionexperiment.com',
+    'api-prescreen.discussionexperiment.com',
     'https://main.d3lbr0m46vlu6t.amplifyapp.com',
     'www.main.d3lbr0m46vlu6t.amplifyapp.com',
     'https://main.d93mhbbvrb5dl.amplifyapp.com',
@@ -65,7 +66,9 @@ DEFAULT_ALLOWED_HOSTS = [
     'main.d8zzmpev39qs6.amplifyapp.com',
     'www.main.d8zzmpev39qs6.amplifyapp.com',
     'https://main.d8zzmpev39qs6.amplifyapp.com',
-    'www.main.d8zzmpev39qs6.amplifyapp.com'
+    'www.main.d8zzmpev39qs6.amplifyapp.com',
+    'main.des82w5ktc0r8.amplifyapp.com',
+    'www.main.des82w5ktc0r8.amplifyapp.com'
 ]
 ALLOWED_HOSTS = [
     host.strip()
@@ -130,10 +133,13 @@ DEFAULT_CORS_ORIGINS = [
     'https://main.d3lbr0m46vlu6t.amplifyapp.com',
     'https://main.d1lwa086vbiduv.amplifyapp.com',
     'https://main.d8zzmpev39qs6.amplifyapp.com',
+    'https://main.des82w5ktc0r8.amplifyapp.com',
+    'https://prescreen.discussionexperiment.com',
     'http://localhost:8080',
     'http://localhost:3000',
     'http://localhost:8000',
-    'https://gobackend.discussionexperiment.com'
+    'https://gobackend.discussionexperiment.com',
+    'https://api-prescreen.discussionexperiment.com'
 ]
 CORS_ORIGIN_WHITELIST = [
     origin.strip()
